@@ -1,4 +1,4 @@
-package core.engine.bean;
+package bean;
 
 import java.util.Set;
 
@@ -9,15 +9,15 @@ import java.util.Set;
  */
 public class PriorityClass {
 
-    private Integer priorty;
+    private Short priorty;
     private Class clazz;
     private Set<Class> interfaces;
 
-    public Integer getPriorty() {
+    public Short getPriorty() {
         return priorty;
     }
 
-    public void setPriorty(Integer priorty) {
+    public void setPriorty(Short priorty) {
         this.priorty = priorty;
     }
 

@@ -1,7 +1,7 @@
-package core.middleware;
+package middleware;
 
-import core.engine.bean.Response;
-import core.engine.bean.Spider;
+import bean.Response;
+import bean.Spider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public interface SpiderMiddleware {
 
     }
 
-    default void processStartRequests(List<URL> startRequests, Spider spider) {
+    default void processStartRequests(String[] startUrls, Spider spider) {
 
     }
 }

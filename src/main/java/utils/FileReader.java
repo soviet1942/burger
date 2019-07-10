@@ -1,4 +1,4 @@
-package util;
+package utils;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.exception.ExceptionUtils;

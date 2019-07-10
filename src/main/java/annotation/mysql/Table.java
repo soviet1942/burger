@@ -1,4 +1,4 @@
-package core.engine.annotation.middleware;
+package annotation.mysql;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,11 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * @Author: zhaoyoucheng
- * @Date: 2019/7/10 15:36
+ * @Date: 2019/7/10 14:13
  * @Description:
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Priority {
-    int value() default 999;
+public @interface Table {
+    String value();
 }

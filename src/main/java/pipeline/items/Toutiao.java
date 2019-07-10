@@ -1,8 +1,8 @@
-package core.pipeline.items;
+package pipeline.items;
 
-import core.engine.annotation.mysql.Column;
-import core.engine.annotation.mysql.Table;
-import core.pipeline.Item;
+import annotation.mysql.Column;
+import annotation.mysql.Table;
+import pipeline.Item;
 
 /**
  * @Author: zhaoyoucheng

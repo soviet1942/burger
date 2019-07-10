@@ -1,4 +1,4 @@
-package core.engine.bean;
+package bean;
 
 import org.jsoup.Connection;
 

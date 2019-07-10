@@ -1,8 +1,9 @@
-package core.middleware;
+package middleware;
 
-import core.engine.bean.Request;
-import core.engine.bean.Response;
-import core.engine.bean.Spider;
+import bean.Crawler;
+import bean.Request;
+import bean.Response;
+import bean.Spider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ public interface DownloaderMiddleware {
         logger.error(exception.getCause().getMessage());
     }
 
-    default void fromCrawler() {
+    default void fromCrawler(Crawler crawler) {
 
     }
 }

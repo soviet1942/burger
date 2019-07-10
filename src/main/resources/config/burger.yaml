@@ -1,2 +1,33 @@
+
+
+#下载模块
 download:
-  maxRetry: 5
+  maxRetry: 5 #最大重试次数
+  thread: 5   #最大线程数
+
+#下载中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
+downloaderMiddleware:
+  middleware.downloader.RetryDownloadMiddleware: 20
+
+
+
+
+
+
+#  ┏┓ 　┏┓
+# ┏┛┻━━━┛┻┓
+# ┃　　　　　┃
+# ┃　　━　   ┃
+# ┃　┳┛　┗┳　┃
+# ┃　　　　　 ┃
+# ┃　　 ┻　   ┃
+# ┃　　　　　 ┃
+# ┗━┓　　　┏━┛ Code is far away from bug with the animal protecting
+#    ┃　　　┃    神兽保佑，代码无BUG!
+#    ┃　　　┃
+#    ┃　　　┗━━━┓
+#    ┃　　　　　 ┣┓
+#    ┃　　　　　┏┛
+#    ┗┓┓┏━┳┓┏┛
+#     ┃┫┫　┃┫┫
+#     ┗┻┛　┗┻┛

@@ -1,4 +1,4 @@
-package core.engine.annotation.mysql;
+package annotation.middleware;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,17 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * @Author: zhaoyoucheng
- * @Date: 2019/7/10 14:17
+ * @Date: 2019/7/10 15:36
  * @Description:
  */
-
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Column {
-    String name() default "";
-
-    String columnDefinition() default "";
-
-    boolean insertable() default true;
-
+public @interface Priority {
+    short value() default 32767;
 }

@@ -1,10 +1,11 @@
-package core.middleware.downloader;
+package middleware.downloader;
 
-import core.engine.annotation.middleware.Priority;
-import core.engine.bean.Request;
-import core.engine.bean.Response;
-import core.engine.bean.Spider;
-import core.middleware.DownloaderMiddleware;
+import annotation.middleware.Priority;
+import bean.Crawler;
+import bean.Request;
+import bean.Response;
+import bean.Spider;
+import middleware.DownloaderMiddleware;
 import org.jsoup.Connection;
 
 import java.net.SocketTimeoutException;
@@ -48,7 +49,7 @@ public class RetryDownloadMiddleware implements DownloaderMiddleware {
     }
 
     @Override
-    public void fromCrawler() {
+    public void fromCrawler(Crawler crawler) {
         this.maxRetryNum = 3;
     }
 

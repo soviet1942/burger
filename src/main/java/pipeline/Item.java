@@ -1,4 +1,4 @@
-package core.pipeline;
+package pipeline;
 
 /**
  * @Author: zhaoyoucheng

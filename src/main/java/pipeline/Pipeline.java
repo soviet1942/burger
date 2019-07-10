@@ -1,7 +1,7 @@
-package core.pipeline;
+package pipeline;
 
-import core.engine.bean.Context;
-import core.engine.bean.Spider;
+import bean.Crawler;
+import bean.Spider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ public interface Pipeline {
 
     }
 
-    default void fromCrawler(Context context) {
+    default void fromCrawler(Crawler crawler) {
 
     }
 }
