@@ -16,4 +16,5 @@ public @interface Spider {
     String name() default "default";
     String[] allowedDomains() default {};
     String[] startUrls() default {};
+    String cron() default "";
 }

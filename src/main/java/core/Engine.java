@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 public class Engine {
 
-    private Logger logger = LoggerFactory.getLogger(Engine.class);
+    private Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private List<DownloaderMiddleware> downloaderMWs = new ArrayList<>();
     private List<SpiderMiddleware> spiderMWs = new ArrayList<>();
     private List<Spider> spiders = new ArrayList<>();
@@ -50,6 +50,10 @@ public class Engine {
         engine.loadSpiders(reflections);
     }
 
+    /**
+     * load (downloader + spider) middlewares
+     * @param reflections
+     */
     private void loadMiddlewares(Reflections reflections) {
         //load (downloader + spider) middlewares
         List<PriorityClass> classPriorityList = reflections.getTypesAnnotatedWith(Priority.class).stream().map(e -> new PriorityClass() {{
@@ -71,8 +75,11 @@ public class Engine {
         });
     }
 
+    /**
+     * load spider
+     * @param reflections
+     */
      private void loadSpiders(Reflections reflections) {
-        //load spider
         reflections.getTypesAnnotatedWith(annotation.spider.Spider.class).forEach(clazz -> {
             Spider spider = new Spider();
             annotation.spider.Spider spiderAnt = clazz.getAnnotation(annotation.spider.Spider.class);
@@ -88,7 +95,7 @@ public class Engine {
             try {
                 spider.setInstance(clazz.newInstance());
             } catch (InstantiationException | IllegalAccessException e) {
-                logger.warn(ExceptionUtils.getMessage(e.getCause()));
+                LOGGER.warn(ExceptionUtils.getMessage(e.getCause()));
             }
             spiders.add(spider);
         });
@@ -155,16 +162,29 @@ public class Engine {
 
     public static void main(String[] args) {
         Engine engine = Engine.instance();
-        Request request = new Request(Jsoup.connect("http://httpbin.org/ip").ignoreContentType(true));
 
         for (Spider spider : engine.getSpiders()) {
-            //download
 
-            Response res = new Response();
+            String startUrl = spider.getStartUrls().get(0);
+
+            Request request = new Request(Jsoup.connect(startUrl));
             Response response = new Response();
-            for (SpiderMiddleware spiderMW : engine.getSpiderMWs()) {
+            List<Object> res = new ArrayList<>();
 
+            try {
+                engine.exeProcessRequest(request, spider);
+                engine.exeProcessResponse(request, response, spider);
+            } catch (Exception e) {
+                engine.exeProcessException(request, e, spider);
             }
+
+            try {
+                engine.exeProcessSpiderInput(response, spider);
+                engine.exeProcessSpiderOutput(response, res, spider);
+            } catch (Exception e) {
+                engine.exeProcessSpiderException(response, e, spider);
+            }
+
             for (Method method : spider.getMethods()) {
                 try {
                     method.invoke(spider.getInstance(), response);
@@ -172,8 +192,13 @@ public class Engine {
                     e.printStackTrace();
                 }
             }
+
+
+
+
         }
         engine.getSpiders().forEach(spider -> spider.getMethods().forEach(method -> {
+
         }));
 
 
