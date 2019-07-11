@@ -29,7 +29,7 @@ public interface SpiderMiddleware {
 
     }
 
-    default void processStartRequests(String[] startUrls, Spider spider) {
+    default void processStartRequests(List<String> startUrls, Spider spider) {
 
     }
 }

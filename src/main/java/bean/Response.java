@@ -17,6 +17,7 @@ public class Response {
     public Response(Connection.Response response) {
         this.response = response;
     }
+    public Response() {}
 
     public Connection.Response getResponse() {
         return response;

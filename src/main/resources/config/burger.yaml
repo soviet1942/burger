@@ -4,10 +4,49 @@
 download:
   maxRetry: 5 #最大重试次数
   thread: 5   #最大线程数
+  userAgentType: pc #pc、ios、android
 
 #下载中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
 downloaderMiddleware:
   middleware.downloader.RetryDownloadMiddleware: 20
+
+#解析中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
+spiderMiddleware:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
