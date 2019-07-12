@@ -11,7 +11,7 @@ import pipeline.Item;
  */
 
 @Table("toutiao_article")
-public class Toutiao implements Item {
+public class ToutiaoPO implements Item {
 
     @Column
     private Integer id;
@@ -21,12 +21,22 @@ public class Toutiao implements Item {
     private String author;
     @Column(name = "content")
     private String content;
+    @Column(name = "poster")
+    private String poster;
     @Column(name = "publishTime")
     private Long publishTime;
     @Column(name = "isOriginal")
     private Boolean isOriginal;
     @Column(name = "url")
     private String url;
+
+    public String getPoster() {
+        return poster;
+    }
+
+    public void setPoster(String poster) {
+        this.poster = poster;
+    }
 
     public Integer getId() {
         return id;

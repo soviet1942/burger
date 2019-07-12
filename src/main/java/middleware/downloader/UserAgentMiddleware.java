@@ -1,5 +1,6 @@
 package middleware.downloader;
 
+import annotation.middleware.Priority;
 import bean.Crawler;
 import bean.Request;
 import bean.Spider;
@@ -22,6 +23,7 @@ import java.util.Random;
  * @Date: 2019/7/11 10:06
  * @Description:
  */
+@Priority(20)
 public class UserAgentMiddleware implements DownloaderMiddleware {
 
     Logger logger = LoggerFactory.getLogger(UserAgentMiddleware.class);
@@ -32,7 +34,8 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
 
     @Override
     public void processRequest(Request request, Spider spider) {
-        request.getConnection().header("user-agent", userAgents.get(random.nextInt(agentSize)));
+        String userAgent = userAgents.get(random.nextInt(agentSize));
+        request.getConnection().header("user-agent", userAgent);
     }
 
     @Override
@@ -50,7 +53,7 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
 
     public List<String> loadUserAgents(String userAgentType) {
         List<String> res = null;
-        String filePath = Thread.currentThread().getContextClassLoader().getResource("config/user-agent.yaml").getPath();
+        String filePath = Thread.currentThread().getContextClassLoader().getResource("config/user-agent").getPath();
         try {
             String jsonStr = FileUtils.readFileToString(new File(filePath), "utf-8");
             res = JSON.parseObject(jsonStr).getJSONArray(userAgentType).toJavaList(String.class);

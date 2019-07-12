@@ -30,8 +30,9 @@ public class Response {
     public Document getDocument() {
         Document document = null;
         try {
-            document = getResponse().parse();
+            document = this.response.parse();
         } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             return document;
         }

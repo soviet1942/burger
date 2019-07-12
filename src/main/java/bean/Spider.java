@@ -3,6 +3,7 @@ package bean;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,7 +22,7 @@ public class Spider {
     List<String> startUrls;
 
     Object instance;
-    List<Method> methods;
+    Map<Method, Class<?>> methods;
 
     public Spider() {}
 
@@ -39,11 +40,11 @@ public class Spider {
         this.instance = instance;
     }
 
-    public List<Method> getMethods() {
+    public Map<Method, Class<?>> getMethods() {
         return methods;
     }
 
-    public void setMethods(List<Method> methods) {
+    public void setMethods(Map<Method, Class<?>> methods) {
         this.methods = methods;
     }
 

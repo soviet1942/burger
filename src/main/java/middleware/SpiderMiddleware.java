@@ -1,5 +1,6 @@
 package middleware;
 
+import bean.Crawler;
 import bean.Response;
 import bean.Spider;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public interface SpiderMiddleware {
 
     }
 
-    default void processStartRequests(List<String> startUrls, Spider spider) {
+    default void fromCrawler(Crawler crawler) {
 
     }
 }

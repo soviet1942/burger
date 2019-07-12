@@ -4,6 +4,7 @@ import bean.Crawler;
 import bean.Request;
 import bean.Response;
 import bean.Spider;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public interface DownloaderMiddleware {
     }
 
     default void processException(Request request, Exception exception, Spider spider) {
-        logger.error(exception.getCause().getMessage());
+
     }
 
     default void fromCrawler(Crawler crawler) {

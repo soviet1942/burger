@@ -13,7 +13,11 @@ downloaderMiddleware:
 #解析中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
 spiderMiddleware:
 
-
+#mysql
+mysql:
+  url: jdbc:mysql://localhost:3306/motor?serverTimezone=GMT%2B8
+  user: root
+  password: 1234
 
 
 

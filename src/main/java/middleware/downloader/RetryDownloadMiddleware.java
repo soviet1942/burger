@@ -6,6 +6,7 @@ import bean.Request;
 import bean.Response;
 import bean.Spider;
 import middleware.DownloaderMiddleware;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
 
 import java.net.SocketTimeoutException;
@@ -29,23 +30,24 @@ public class RetryDownloadMiddleware implements DownloaderMiddleware {
 
     @Override
     public void processResponse(Request request, Response response, Spider spider) {
-        String text = response.getDocument().text();
-        System.out.println("收到回复 " + text);
+        System.out.println("收到回复 ");
     }
 
     @Override
     public void processException(Request request, Exception exception, Spider spider) {
+        String exceptionMsg = ExceptionUtils.getStackTrace(exception.fillInStackTrace());
+        String url = request.getConnection().request().url().toString();
         if (exception.getClass() == SocketTimeoutException.class) {
             int retryCount = request.getRetryCount();
             if (retryCount > maxRetryNum) {
-                logger.warn("下载失败,重试次数大于{}次, url: {}", maxRetryNum, request.getConnection().request().url().toString());
+                logger.warn("多次下载超时，重试次数大于{}次，下载失败，url: {}", maxRetryNum, url, exceptionMsg);
             } else {
                 request.setRetryCount(++ maxRetryNum);
-                logger.info("下载重试，重试次数{}, url: {}", maxRetryNum, request.getConnection().request().url().toString());
+                logger.info("下载超时 重试，重试次数{}, url: {}", maxRetryNum, url, exceptionMsg);
             }
-        } else {
-            logger.error("下载失败，url");
-        }
+        } /*else {
+            logger.error("下载失败，url：{}, msg：{}", url, exceptionMsg);
+        }*/
     }
 
     @Override
