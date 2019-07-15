@@ -18,6 +18,7 @@ public class Spider {
     private Exception exception;
 
     private String name;
+    private String cron;
     private List<String> allowedDomains;
     private List<String> startUrls;
 
@@ -34,6 +35,14 @@ public class Spider {
 
     public Object getInstance() {
         return instance;
+    }
+
+    public String getCron() {
+        return cron;
+    }
+
+    public void setCron(String cron) {
+        this.cron = cron;
     }
 
     public void setInstance(Object instance) {

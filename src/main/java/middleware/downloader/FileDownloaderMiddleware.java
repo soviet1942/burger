@@ -4,13 +4,13 @@ import bean.Request;
 import bean.Response;
 import bean.Spider;
 import controller.Server;
+import downloader.HttpDownloader;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
-import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.codec.BodyCodec;
+import middleware.downloader.interfaces.DownloaderMiddleware;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,29 +27,13 @@ public class FileDownloaderMiddleware implements DownloaderMiddleware {
 
     private static Logger LOGGER = LoggerFactory.getLogger(FileDownloaderMiddleware.class);
 
-    @Test
-    public void fff() {
-        Request request = new Request();
-        request.addMeta("aa", new Object());
-        System.out.println(request.getAllMeta());
-        String a = request.getMeta("aa");
-        System.out.println(a);
-    }
-
     @Override
     public void processResponse(Request request, Response response, Spider spider) {
         HttpResponse httpResponse = response.getHttpResponse();
-        Buffer buffer = null;
-        if (httpResponse == null || (buffer = httpResponse.bodyAsBuffer()) == null) {
-            URI uri = null;
-            try {
-                uri = new URI("http://httpbin.org/headers");
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-
+        Buffer buffer;
+        if (httpResponse != null && (buffer = httpResponse.bodyAsBuffer()) != null) {
+            downloadFile(request, buffer);
         }
-        downloadFile(request, buffer);
     }
 
     public void downloadFile(Request request, Buffer buffer) {
@@ -61,6 +45,32 @@ public class FileDownloaderMiddleware implements DownloaderMiddleware {
         createFuture.compose(v -> {
             fs.writeFile(filePath, buffer, writeFuture);
             return writeFuture;
+        });
+    }
+
+    @Test
+    public void testDownloadPic() {
+        HttpDownloader.httpDownload("https://www.csgo.com.cn/web201608/images/cslogo.png", httpRequest -> {
+            httpRequest.as(BodyCodec.string()).send(ar -> {
+                if (ar.succeeded()) {
+
+                }
+            });
+        });
+    }
+
+    @Test
+    public void testDownloadVideo() {
+        String counterStrike = "https://gamevideo.wmupd.com/csgomedia/media/LEFT_1_21.webm";
+        String terrorist = "https://gamevideo.wmupd.com/csgomedia/media/RIGHT_1_20.webm";
+        String background = "https://gamevideo.wmupd.com/csgomedia/media/sirocco_webm.webm";
+        String dota2 = "https://gamevideo.wmupd.com/dota2media/media/0510.webm";
+        HttpDownloader.httpDownload(counterStrike, httpRequest -> {
+            httpRequest.as(BodyCodec.string()).send(ar -> {
+                if (ar.succeeded()) {
+
+                }
+            });
         });
     }
 }

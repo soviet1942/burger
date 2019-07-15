@@ -2,6 +2,7 @@ package middleware.downloader;
 
 import bean.Request;
 import bean.Spider;
+import middleware.downloader.interfaces.DownloaderMiddleware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

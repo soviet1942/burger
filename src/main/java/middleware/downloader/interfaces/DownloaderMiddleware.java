@@ -1,4 +1,4 @@
-package middleware.downloader;
+package middleware.downloader.interfaces;
 
 import bean.Crawler;
 import bean.Request;

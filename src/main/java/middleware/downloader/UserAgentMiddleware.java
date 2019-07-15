@@ -5,6 +5,7 @@ import bean.Crawler;
 import bean.Request;
 import bean.Spider;
 import com.alibaba.fastjson.JSON;
+import middleware.downloader.interfaces.DownloaderMiddleware;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;

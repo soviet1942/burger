@@ -3,7 +3,7 @@ package middleware;
 import annotation.middleware.Priority;
 import bean.*;
 import core.Engine;
-import middleware.downloader.DownloaderMiddleware;
+import middleware.downloader.interfaces.DownloaderMiddleware;
 import middleware.spider.SpiderMiddleware;
 import org.reflections.Reflections;
 import org.slf4j.Logger;

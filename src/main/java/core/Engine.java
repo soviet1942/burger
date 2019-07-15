@@ -6,6 +6,7 @@ import annotation.spider.Parser;
 import bean.*;
 import com.alibaba.fastjson.JSONObject;
 import controller.Server;
+import downloader.HttpDownloader;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.Pump;
 import io.vertx.ext.web.client.HttpRequest;
@@ -15,6 +16,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
 import middleware.MiddlewareFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,7 @@ public class Engine {
     private static Engine INSTANCE;
     /** middleware (downloader + spider) */
     private static MiddlewareFactory MIDDLEWARE_FACTORY;
-    /** spider (handle download result) */
+    /** spider (parse text/html) */
     private static SpiderFactory SPIDER_FACTORY;
     /** pipeline (persist db) */
     private static PipelineFactory PIPELINE_FACTORY;
@@ -67,72 +69,61 @@ public class Engine {
     }
 
 
-    public static void main(String[] args) throws URISyntaxException {
+    public void download(Request request, Spider spider) {
 
-        Engine engine = Engine.instance();
-
-        for (Spider spider : SPIDER_FACTORY.getSpiders()) {
-
-            Request request = engine.getDefaultDownloader("http://httpbin.org/headers");
-
-            List<Object> res = new ArrayList<>();
-            Response response = new Response();
-
-            //before download
-            MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
-
-            request.getHttpRequest().as(BodyCodec.string()).send(ar -> {
-
-                //download success
-                if (ar.succeeded()) {
-                    HttpResponse resp = ar.result();
-                    response.setHttpResponse(resp);
-                    System.out.println(resp.statusCode() + "==========================>" + Thread.currentThread().getName());
-                    //after download
-                    MIDDLEWARE_FACTORY.exeProcessResponse(request, response, spider);
-                    try {
-                        //before parse
-                        MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
-                        //TODO parse
-                        //after parse
-                        MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, res, spider);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
-                    }
-                } else {
-                    //download failed
-                    MIDDLEWARE_FACTORY.exeProcessException(request, ar.cause(), spider);
+        //before download
+        MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
+        //downloading
+        request.getHttpRequest().as(BodyCodec.string()).send(ar -> {
+            //download success
+            if (ar.succeeded()) {
+                Response response = new Response(ar.result());
+                //after download
+                MIDDLEWARE_FACTORY.exeProcessResponse(request, response, spider);
+                try {
+                    //start parse
+                    parse(response, spider);
+                } catch (Exception e) {
+                    LOGGER.error(ExceptionUtils.getStackTrace(e.getCause()));
+                    MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
                 }
-            });
+            } else {
+                //download failed
+                MIDDLEWARE_FACTORY.exeProcessException(request, ar.cause(), spider);
+            }
+        });
+
+    }
 
 
-            HttpResponse<String> httpResponse = response.getHttpResponse();
-
-
-            for (Map.Entry<Method, Class<?>> mEntry : spider.getMethods().entrySet()) {
-                Method method = mEntry.getKey();
-                Class<?> returnType = mEntry.getValue();
-                if (method.getAnnotation(Parser.class) != null) {
-                    try {
-                        Object result = method.invoke(spider.getInstance(), response);
-                        List<Object> data;
-                        if (returnType != null) {
-                            if (method.getReturnType() == List.class) {
-                                data = (List) result;
-                            } else {
-                                data = new ArrayList<Object>() {{ add(result); }};
-                            }
-                            engine.persist(data, returnType);
+    public void parse(Response response, Spider spider) {
+        //before parse
+        MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
+        for (Map.Entry<Method, Class<?>> mEntry : spider.getMethods().entrySet()) {
+            Method method = mEntry.getKey();
+            Class<?> returnType = mEntry.getValue();
+            if (method.getAnnotation(Parser.class) != null) {
+                try {
+                    //parsing
+                    Object result = method.invoke(spider.getInstance(), response);
+                    //after parse
+                    MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, new ArrayList<>(), spider);
+                    List<Object> data;
+                    if (returnType != null) {
+                        if (method.getReturnType() == List.class) {
+                            data = (List) result;
+                        } else {
+                            data = new ArrayList<Object>() {{ add(result); }};
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        persist(data, returnType);
                     }
+                } catch (Exception e) {
+                    LOGGER.error(ExceptionUtils.getStackTrace(e.getCause()));
                 }
             }
-
         }
     }
+
 
     public void persist(List<Object> data, Class<?> clazz) {
         //校验

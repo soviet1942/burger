@@ -1,10 +1,14 @@
 package bean;
 
 
+import downloader.HttpDownloader;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpRequest;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,8 +20,9 @@ import java.util.Map;
 public class Request {
 
     private HttpRequest<Buffer> httpRequest;
-    private int retryCount = 0;
-    private URI uri;
+    private URL url;
+    private short retryCount;
+    private short priority;
     private Map<String, Object> meta;
 
     public Request() {
@@ -28,9 +33,18 @@ public class Request {
         this.httpRequest = httpRequest;
     }
 
-    public Request(HttpRequest<Buffer> httpRequest, URI uri) {
+    public Request(HttpRequest<Buffer> httpRequest, URL url) {
         this.httpRequest = httpRequest;
-        this.uri = uri;
+        this.url = url;
+    }
+
+    public Request(HttpRequest<Buffer> httpRequest, String url) {
+        this.httpRequest = httpRequest;
+        try {
+            this.url = new URL(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
     public <M> M getMeta(String name) {
@@ -63,19 +77,35 @@ public class Request {
         this.httpRequest = httpRequest;
     }
 
-    public int getRetryCount() {
+    public short getRetryCount() {
         return retryCount;
     }
 
-    public void setRetryCount(int retryCount) {
+    public void setRetryCount(short retryCount) {
         this.retryCount = retryCount;
     }
 
-    public URI getUri() {
-        return uri;
+    public URL getUrl() {
+        return url;
     }
 
-    public void setUri(URI uri) {
-        this.uri = uri;
+    public void setUrl(URL url) {
+        this.url = url;
+    }
+
+    public void setUrl(String url) {
+        try {
+            this.url = new URL(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public short getPriority() {
+        return priority;
+    }
+
+    public void setPriority(short priority) {
+        this.priority = priority;
     }
 }

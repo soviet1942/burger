@@ -4,7 +4,7 @@
 download:
   maxRetry: 5 #最大重试次数
   maxPoolSize: 1   #最大线程数
-  maxTimeout: 30000 #下载超时时间（毫秒）
+  connectTimeout: 30000 #下载超时时间（毫秒）
   idelTimeout: 10 #空闲线程回收超时时间（秒）
   userAgentType: pc #pc、ios、android
 
