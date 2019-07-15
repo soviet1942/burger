@@ -4,6 +4,15 @@ import annotation.mysql.Column;
 import annotation.mysql.Table;
 import annotation.spider.Parser;
 import bean.*;
+import com.alibaba.fastjson.JSONObject;
+import controller.Server;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.Pump;
+import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.codec.BodyCodec;
 import middleware.MiddlewareFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -11,16 +20,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pipeline.PipelineFactory;
 import spider.SpiderFactory;
+import sun.net.www.http.HttpClient;
 import utils.SqlUtils;
 
 import java.lang.reflect.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @Author: zhaoyoucheng
  * @Date: 2019/7/10 10:10
- * @Description:
+ * @Description: 爬虫引擎
  */
 public class Engine {
 
@@ -55,34 +67,48 @@ public class Engine {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
 
         Engine engine = Engine.instance();
 
         for (Spider spider : SPIDER_FACTORY.getSpiders()) {
 
-            String startUrl = spider.getStartUrls().get(0);
+            Request request = engine.getDefaultDownloader("http://httpbin.org/headers");
 
-            Request request = new Request(Jsoup.connect(startUrl));
-            Response response = new Response();
             List<Object> res = new ArrayList<>();
+            Response response = new Response();
 
-            try {
-                MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
-                response.setResponse(request.getConnection().ignoreContentType(true).execute());
-                MIDDLEWARE_FACTORY.exeProcessResponse(request, response, spider);
-            } catch (Exception e) {
-                e.printStackTrace();
-                MIDDLEWARE_FACTORY.exeProcessException(request, e, spider);
-            }
+            //before download
+            MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
 
-            try {
-                MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
-                MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, res, spider);
-            } catch (Exception e) {
-                e.printStackTrace();
-                MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e, spider);
-            }
+            request.getHttpRequest().as(BodyCodec.string()).send(ar -> {
+
+                //download success
+                if (ar.succeeded()) {
+                    HttpResponse resp = ar.result();
+                    response.setHttpResponse(resp);
+                    System.out.println(resp.statusCode() + "==========================>" + Thread.currentThread().getName());
+                    //after download
+                    MIDDLEWARE_FACTORY.exeProcessResponse(request, response, spider);
+                    try {
+                        //before parse
+                        MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
+                        //TODO parse
+                        //after parse
+                        MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, res, spider);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
+                    }
+                } else {
+                    //download failed
+                    MIDDLEWARE_FACTORY.exeProcessException(request, ar.cause(), spider);
+                }
+            });
+
+
+            HttpResponse<String> httpResponse = response.getHttpResponse();
+
 
             for (Map.Entry<Method, Class<?>> mEntry : spider.getMethods().entrySet()) {
                 Method method = mEntry.getKey();

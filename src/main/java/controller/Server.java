@@ -1,6 +1,8 @@
 package controller;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -9,8 +11,16 @@ import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class Server {
+
+    private static final Vertx vertx = Vertx.vertx();
+
+    public static Vertx getVertx() {
+        return vertx;
+    }
 
     @Test
     public void test() throws IOException {
@@ -22,9 +32,27 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) {
+    @Test
+    public void test1() throws URISyntaxException {
+        URI uri = new URI("http://httpbin.org/headers");
+        WebClient client = WebClient.create(Server.getVertx(), new WebClientOptions() {{
+            setConnectTimeout(30000);
+            setMaxPoolSize(1);
+            setDefaultHost(uri.getHost());
+        }});
+        HttpRequest<Buffer> httpRequest = client.get(uri.getRawPath());
+        /*httpRequest.as(BodyCodec.string()).send(ar -> {
+            if (ar.succeeded()) {
+                HttpResponse resp = ar.result();
+                System.out.println(resp.statusCode() + "==========================>" + Thread.currentThread().getName());
+            } else {
+                ar.cause().printStackTrace();
+            }
+        });*/
+        while (true);
+    }
 
-        Vertx vertx = Vertx.vertx();
+    public static void main(String[] args) {
 
         WebClientOptions webClientOptions = new WebClientOptions()
                 .setTrustAll(true)
@@ -32,15 +60,16 @@ public class Server {
                 .setIdleTimeout(10)
                 .setMaxPoolSize(1)
                 .setFollowRedirects(true)
-                .setDefaultHost("www.transfermarkt.com");
+                .setDefaultHost(".*");
                 /*.setProxyOptions(new ProxyOptions() {{
                     setHost("");
                     setPort(1);
                 }});*/
 
-        WebClient client = WebClient.create(vertx, webClientOptions);
+        WebClient client = WebClient.create(getVertx(), webClientOptions);
 
-        for (int i=210000; i<210015; i++) {
+        for (int i=210000; i<210001; i++) {
+
             client.get("https://www.transfermarkt.com/georges-griffiths/profil/spieler/" + i)
                     .putHeader("Accept", "*/*")
                     .putHeader("Cache-Control", "no-cache")

@@ -87,9 +87,9 @@ public class MiddlewareFactory {
             downloadMW.processResponse(request, response, spider);
         }
     }
-    public void exeProcessException(Request request, Exception exception, Spider spider) {
+    public void exeProcessException(Request request, Throwable throwable, Spider spider) {
         for (DownloaderMiddleware downloadMW : downloaderMWs) {
-            downloadMW.processException(request, exception, spider);
+            downloadMW.processException(request, throwable, spider);
         }
     }
 
@@ -106,9 +106,9 @@ public class MiddlewareFactory {
             spiderMW.processSpiderOutput(response, result, spider);
         }
     }
-    public void exeProcessSpiderException(Response response, Exception exception, Spider spider) {
+    public void exeProcessSpiderException(Response response, Throwable throwable, Spider spider) {
         for (SpiderMiddleware spiderMW : spiderMWs) {
-            spiderMW.processSpiderException(response, exception, spider);
+            spiderMW.processSpiderException(response, throwable, spider);
         }
     }
 

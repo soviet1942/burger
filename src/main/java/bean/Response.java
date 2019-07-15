@@ -1,9 +1,12 @@
 package bean;
 
+import io.vertx.ext.web.client.HttpResponse;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.List;
 
 /**
  * @Author: zhaoyoucheng
@@ -12,29 +15,28 @@ import java.io.IOException;
  */
 public class Response {
 
-    private Connection.Response response;
+    private HttpResponse httpResponse;
+    private URL[] outlinks;
 
-    public Response(Connection.Response response) {
-        this.response = response;
+    public Response(HttpResponse httpResponse) {
+        this.httpResponse = httpResponse;
     }
+
     public Response() {}
 
-    public Connection.Response getResponse() {
-        return response;
+    public HttpResponse getHttpResponse() {
+        return httpResponse;
     }
 
-    public void setResponse(Connection.Response response) {
-        this.response = response;
+    public void setHttpResponse(HttpResponse httpResponse) {
+        this.httpResponse = httpResponse;
     }
 
-    public Document getDocument() {
-        Document document = null;
-        try {
-            document = this.response.parse();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            return document;
-        }
+    public URL[] getOutlinks() {
+        return outlinks;
+    }
+
+    public void setOutlinks(URL... outlinks) {
+        this.outlinks = outlinks;
     }
 }

@@ -13,16 +13,16 @@ import java.util.Set;
  */
 public class Spider {
 
-    Request request;
-    Response response;
-    Exception exception;
+    private Request request;
+    private Response response;
+    private Exception exception;
 
-    String name;
-    List<String> allowedDomains;
-    List<String> startUrls;
+    private String name;
+    private List<String> allowedDomains;
+    private List<String> startUrls;
 
-    Object instance;
-    Map<Method, Class<?>> methods;
+    private Object instance;
+    private Map<Method, Class<?>> methods;
 
     public Spider() {}
 

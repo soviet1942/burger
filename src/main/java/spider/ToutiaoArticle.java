@@ -8,6 +8,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import pipeline.ToutiaoPO;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +24,8 @@ import java.util.List;
 public class ToutiaoArticle {
 
     @Parser
-    public List<ToutiaoPO> parse(Response response) {
-        String jsonStr = response.getDocument().text();
+    public List<ToutiaoPO> parse(Response response) throws MalformedURLException {
+        String jsonStr = response.getHttpResponse().bodyAsString();
         List<ToutiaoPO> res = new ArrayList<>();
         JSONArray jsonArray = JSON.parseObject(jsonStr).getJSONArray("data");
         for (int i=0; i<jsonArray.size(); i++) {
@@ -36,6 +38,8 @@ public class ToutiaoArticle {
             po.setTitle(title);
             po.setPoster(imgUrl);
         }
+        URL url = new URL("hehe");
+        response.setOutlinks(url);
         return res;
     }
 }

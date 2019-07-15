@@ -19,7 +19,7 @@ import java.util.Random;
 /**
  * @Author: zhaoyoucheng
  * @Date: 2019/7/11 10:06
- * @Description:
+ * @Description: 随机user-agent 包含（pc、Android、ios）
  */
 @Priority(20)
 public class UserAgentMiddleware implements DownloaderMiddleware {
@@ -29,12 +29,6 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
     String userAgentType;
     List<String> userAgents;
     Integer agentSize;
-
-    @Override
-    public void processRequest(Request request, Spider spider) {
-        String userAgent = userAgents.get(random.nextInt(agentSize));
-        request.getConnection().header("user-agent", userAgent);
-    }
 
     @Override
     public void fromCrawler(Crawler crawler) {
@@ -47,6 +41,12 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
             case "ios": this.userAgents = userAgents != null ? userAgents : new ArrayList<String>() {{add("Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1");}};
         }
         this.agentSize = userAgents.size();
+    }
+
+    @Override
+    public void processRequest(Request request, Spider spider) {
+        String userAgent = userAgents.get(random.nextInt(agentSize));
+        request.getHttpRequest().putHeader("user-agent", userAgent);
     }
 
     public List<String> loadUserAgents(String userAgentType) {

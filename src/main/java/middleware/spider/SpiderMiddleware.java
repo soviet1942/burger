@@ -25,7 +25,7 @@ public interface SpiderMiddleware {
 
     }
 
-    default void processSpiderException(Response response, Exception exception, Spider spider) {
+    default void processSpiderException(Response response, Throwable throwable, Spider spider) {
 
     }
 

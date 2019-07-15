@@ -24,7 +24,7 @@ public interface DownloaderMiddleware {
 
     }
 
-    default void processException(Request request, Exception exception, Spider spider) {
+    default void processException(Request request, Throwable throwable, Spider spider) {
 
     }
 
