@@ -5,7 +5,6 @@ import bean.Crawler;
 import bean.Request;
 import bean.Response;
 import bean.Spider;
-import middleware.DownloaderMiddleware;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
 
@@ -35,7 +34,7 @@ public class RetryDownloadMiddleware implements DownloaderMiddleware {
 
     @Override
     public void processException(Request request, Exception exception, Spider spider) {
-        String exceptionMsg = ExceptionUtils.getStackTrace(exception.fillInStackTrace());
+        String exceptionMsg = ExceptionUtils.getStackTrace(exception);
         String url = request.getConnection().request().url().toString();
         if (exception.getClass() == SocketTimeoutException.class) {
             int retryCount = request.getRetryCount();

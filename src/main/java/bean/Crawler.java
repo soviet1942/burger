@@ -1,20 +1,12 @@
 package bean;
 
 import com.alibaba.fastjson.JSONObject;
-import middleware.DownloaderMiddleware;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jsoup.Jsoup;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 import utils.FileReader;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Author: zhaoyoucheng
@@ -26,6 +18,7 @@ public class Crawler {
     private Logger LOGGER = LoggerFactory.getLogger(Crawler.class);
     private JSONObject CONF;
     private static Crawler INSTANCE;
+    private static Reflections REFLECTION;
 
     public JSONObject configs() {
         return CONF;
@@ -42,6 +35,17 @@ public class Crawler {
             }
         }
         return INSTANCE;
+    }
+
+    public static Reflections getReflection() {
+        if (REFLECTION == null) {
+            synchronized (Crawler.class) {
+                if (REFLECTION == null) {
+                    REFLECTION = new Reflections("");
+                }
+            }
+        }
+        return REFLECTION;
     }
 
     public void init() {

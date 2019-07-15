@@ -5,10 +5,8 @@ import bean.Crawler;
 import bean.Request;
 import bean.Spider;
 import com.alibaba.fastjson.JSON;
-import middleware.DownloaderMiddleware;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +56,7 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
             String jsonStr = FileUtils.readFileToString(new File(filePath), "utf-8");
             res = JSON.parseObject(jsonStr).getJSONArray(userAgentType).toJavaList(String.class);
         } catch (IOException e) {
-            logger.error(ExceptionUtils.getMessage(e.getCause()));
+            logger.error(ExceptionUtils.getStackTrace(e));
         }
         return res;
     }

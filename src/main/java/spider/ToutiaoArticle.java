@@ -6,9 +6,8 @@ import bean.Response;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import pipeline.items.ToutiaoPO;
+import pipeline.ToutiaoPO;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

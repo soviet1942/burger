@@ -31,7 +31,7 @@ public class FileReader {
         try {
             yamlObject = (Map<String, Object>) yaml.load(new FileInputStream(new File(filePath)));
         } catch (FileNotFoundException e) {
-            logger.error("yaml文件读取错误, cause: {}", ExceptionUtils.getMessage(e.getCause()));
+            logger.error("yaml文件读取错误, cause: {}", ExceptionUtils.getStackTrace(e));
         }
         JSONObject jsonObject = new JSONObject(yamlObject);
         return jsonObject;

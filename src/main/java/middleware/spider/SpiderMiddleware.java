@@ -1,4 +1,4 @@
-package middleware;
+package middleware.spider;
 
 import bean.Crawler;
 import bean.Response;
@@ -6,7 +6,6 @@ import bean.Spider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.util.List;
 
 /**

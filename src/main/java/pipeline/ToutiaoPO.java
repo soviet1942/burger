@@ -1,8 +1,7 @@
-package pipeline.items;
+package pipeline;
 
 import annotation.mysql.Column;
 import annotation.mysql.Table;
-import pipeline.Item;
 
 /**
  * @Author: zhaoyoucheng
@@ -11,7 +10,7 @@ import pipeline.Item;
  */
 
 @Table("toutiao_article")
-public class ToutiaoPO implements Item {
+public class ToutiaoPO {
 
     @Column
     private Integer id;

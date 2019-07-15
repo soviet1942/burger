@@ -1,10 +1,9 @@
-package middleware;
+package middleware.downloader;
 
 import bean.Crawler;
 import bean.Request;
 import bean.Response;
 import bean.Spider;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
