@@ -19,7 +19,7 @@ import java.util.List;
  * @Description:
  */
 
-@Spider(name = "toutiao", cron = "0 0/5 * * * ? *", startUrls = "https://www.toutiao.com/api/pc/realtime_news/",
+@Spider(name = "toutiao", cron = "0/3 * * * * ?", startUrls = "https://www.toutiao.com/api/pc/realtime_news/",
         allowedDomains = {"toutiao.com", "365yg.com", "ixigua.com"})
 public class ToutiaoArticle {
 

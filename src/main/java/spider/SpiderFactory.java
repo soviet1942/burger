@@ -55,6 +55,7 @@ public class SpiderFactory {
             String spiderName = spiderAnt.name();
             String[] allowedDomains = spiderAnt.allowedDomains();
             String[] startUrls = spiderAnt.startUrls();
+            String cron = spiderAnt.cron();
             //get all parse() methods
             Map<Method, Class<?>> methods = Arrays.stream(clazz.getDeclaredMethods()).filter(s -> s.getAnnotation(Parser.class) != null)
                     .collect(Collectors.toMap(e -> e, e -> {
@@ -72,6 +73,7 @@ public class SpiderFactory {
             spider.setAllowedDomains(Arrays.asList(allowedDomains));
             spider.setStartUrls(Arrays.asList(startUrls));
             spider.setMethods(methods);
+            spider.setCron(cron);
             try {
                 spider.setInstance(clazz.newInstance());
             } catch (InstantiationException | IllegalAccessException e) {

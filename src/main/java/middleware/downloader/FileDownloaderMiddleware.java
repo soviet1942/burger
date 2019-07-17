@@ -50,7 +50,7 @@ public class FileDownloaderMiddleware implements DownloaderMiddleware {
 
     @Test
     public void testDownloadPic() {
-        HttpDownloader.httpDownload("https://www.csgo.com.cn/web201608/images/cslogo.png", httpRequest -> {
+        HttpDownloader.instance().httpDownload("https://www.csgo.com.cn/web201608/images/cslogo.png", httpRequest -> {
             httpRequest.as(BodyCodec.string()).send(ar -> {
                 if (ar.succeeded()) {
 
@@ -65,7 +65,7 @@ public class FileDownloaderMiddleware implements DownloaderMiddleware {
         String terrorist = "https://gamevideo.wmupd.com/csgomedia/media/RIGHT_1_20.webm";
         String background = "https://gamevideo.wmupd.com/csgomedia/media/sirocco_webm.webm";
         String dota2 = "https://gamevideo.wmupd.com/dota2media/media/0510.webm";
-        HttpDownloader.httpDownload(counterStrike, httpRequest -> {
+        HttpDownloader.instance().httpDownload(counterStrike, httpRequest -> {
             httpRequest.as(BodyCodec.string()).send(ar -> {
                 if (ar.succeeded()) {
 

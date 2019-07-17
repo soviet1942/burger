@@ -12,9 +12,6 @@ import middleware.downloader.interfaces.DownloadInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 public class HttpDownloader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HttpDownloader.class);
@@ -22,12 +19,24 @@ public class HttpDownloader {
     private static Integer connectTimeout;
     private static Integer maxPoolSize;
     private static Integer idelTimeout;
+    private static HttpDownloader INSTANCE;
 
-    static {
-        init();
+    private HttpDownloader() {}
+
+    public static HttpDownloader instance() {
+        if (INSTANCE == null) {
+            synchronized (HttpDownloader.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new HttpDownloader();
+                    INSTANCE.init();
+                }
+            }
+        }
+        return INSTANCE;
     }
 
-    private static void init() {
+
+    private void init() {
         JSONObject jsonObject = Crawler.instance().configs().getJSONObject("download");
         if (jsonObject != null) {
             connectTimeout = jsonObject.getString("maxTimeout") == null ? 30000 : Integer.parseInt(jsonObject.getString("maxTimeout"));
@@ -36,11 +45,11 @@ public class HttpDownloader {
         }
     }
 
-    public static Request getDefaultRequest(String url) {
+    public Request getDefaultRequest(String url) {
         return getDefaultRequest(url, null);
     }
 
-    public static Request getDefaultRequest(String url, String spiderName) {
+    public Request getDefaultRequest(String url, String spiderName) {
         WebClientOptions webClientOptions = new WebClientOptions();
         webClientOptions.setConnectTimeout(connectTimeout);
         webClientOptions.setMaxPoolSize(maxPoolSize);
@@ -54,7 +63,7 @@ public class HttpDownloader {
         return request;
     }
 
-    public static void httpDownload(String url, DownloadInboundHandler handler) {
+    public void httpDownload(String url, DownloadInboundHandler handler) {
         HttpRequest<Buffer> httpRequest = getDefaultRequest(url).getHttpRequest();
         handler.handle(httpRequest);
     }
