@@ -2,6 +2,7 @@ package spider;
 
 
 import annotation.spider.Parser;
+import bean.Crawler;
 import bean.Spider;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reflections.Reflections;
@@ -39,7 +40,7 @@ public class SpiderFactory {
     }
 
     private void init() {
-
+        loadSpiders(Crawler.getReflection());
     }
 
     /**
@@ -48,7 +49,6 @@ public class SpiderFactory {
      * @param reflections
      */
     private void loadSpiders(Reflections reflections) {
-        SpiderFactory spiderFactory = SpiderFactory.instance();
         reflections.getTypesAnnotatedWith(annotation.spider.Spider.class).forEach(clazz -> {
             Spider spider = new Spider();
             annotation.spider.Spider spiderAnt = clazz.getAnnotation(annotation.spider.Spider.class);

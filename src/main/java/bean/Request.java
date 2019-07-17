@@ -23,6 +23,7 @@ public class Request {
     private URL url;
     private short retryCount;
     private short priority;
+    private String spiderName;
     private Map<String, Object> meta;
 
     public Request() {
@@ -107,5 +108,13 @@ public class Request {
 
     public void setPriority(short priority) {
         this.priority = priority;
+    }
+
+    public String getSpiderName() {
+        return spiderName;
+    }
+
+    public void setSpiderName(String spiderName) {
+        this.spiderName = spiderName;
     }
 }

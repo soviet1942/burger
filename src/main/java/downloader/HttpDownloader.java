@@ -37,6 +37,10 @@ public class HttpDownloader {
     }
 
     public static Request getDefaultRequest(String url) {
+        return getDefaultRequest(url, null);
+    }
+
+    public static Request getDefaultRequest(String url, String spiderName) {
         WebClientOptions webClientOptions = new WebClientOptions();
         webClientOptions.setConnectTimeout(connectTimeout);
         webClientOptions.setMaxPoolSize(maxPoolSize);
@@ -44,6 +48,9 @@ public class HttpDownloader {
         WebClient client = WebClient.create(Server.getVertx(), webClientOptions);
         HttpRequest<Buffer> httpRequest = client.get(url);
         Request request = new Request(httpRequest, url);
+        if (spiderName != null) {
+            request.setSpiderName(spiderName);
+        }
         return request;
     }
 
