@@ -40,8 +40,8 @@ public class HttpDownloader {
         JSONObject jsonObject = Crawler.instance().configs().getJSONObject("download");
         if (jsonObject != null) {
             connectTimeout = jsonObject.getString("maxTimeout") == null ? 30000 : Integer.parseInt(jsonObject.getString("maxTimeout"));
-            maxPoolSize = jsonObject.getString("maxPoolSize") == null ? 1 : Integer.parseInt(jsonObject.getString("maxTimeout"));
-            idelTimeout = jsonObject.getString("idelTimeout") == null ? 10 : Integer.parseInt(jsonObject.getString("maxTimeout"));
+            maxPoolSize = jsonObject.getString("maxPoolSize") == null ? 1 : Integer.parseInt(jsonObject.getString("maxPoolSize"));
+            idelTimeout = jsonObject.getString("idelTimeout") == null ? 10 : Integer.parseInt(jsonObject.getString("idelTimeout"));
         }
     }
 

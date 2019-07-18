@@ -1,4 +1,7 @@
 
+#调度部分
+schedule:
+  fetchInterval: 1000
 
 #下载模块
 download:
@@ -8,12 +11,13 @@ download:
   idelTimeout: 10 #空闲线程回收超时时间（秒）
   userAgentType: pc #pc、ios、android
 
-#下载中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
-downloaderMiddleware:
-  middleware.downloader.RetryDownloadMiddleware: 20
-
-#解析中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
-spiderMiddleware:
+#中间件部分
+middleware:
+  #下载中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
+  downloaderMiddleware:
+    middleware.downloader.RetryDownloadMiddleware: 20
+  #解析中间件，值越小优先级越高，值有效区间为[0, 32767]，小于0不执行
+  spiderMiddleware:
 
 #mysql
 mysql:

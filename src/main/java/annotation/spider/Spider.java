@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Spider {
     String name() default "default";
-    String[] allowedDomains() default {};
+    String[] filterUrls() default {};
     String[] startUrls() default {};
     String cron() default "";
 }

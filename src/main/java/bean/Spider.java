@@ -19,7 +19,7 @@ public class Spider {
 
     private String name;
     private String cron;
-    private List<String> allowedDomains;
+    private List<String> filterUrls;
     private List<String> startUrls;
 
     private Object instance;
@@ -27,9 +27,9 @@ public class Spider {
 
     public Spider() {}
 
-    public Spider(String name, List<String> allowedDomains, List<String> startUrls) {
+    public Spider(String name, List<String> filterUrls, List<String> startUrls) {
         this.name = name;
-        this.allowedDomains = allowedDomains;
+        this.filterUrls = filterUrls;
         this.startUrls = startUrls;
     }
 
@@ -89,12 +89,12 @@ public class Spider {
         this.name = name;
     }
 
-    public List<String> getAllowedDomains() {
-        return allowedDomains;
+    public List<String> getFilterUrls() {
+        return filterUrls;
     }
 
-    public void setAllowedDomains(List<String> allowedDomains) {
-        this.allowedDomains = allowedDomains;
+    public void setFilterUrls(List<String> filterUrls) {
+        this.filterUrls = filterUrls;
     }
 
     public List<String> getStartUrls() {

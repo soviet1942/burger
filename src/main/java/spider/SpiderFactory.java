@@ -53,7 +53,7 @@ public class SpiderFactory {
             Spider spider = new Spider();
             annotation.spider.Spider spiderAnt = clazz.getAnnotation(annotation.spider.Spider.class);
             String spiderName = spiderAnt.name();
-            String[] allowedDomains = spiderAnt.allowedDomains();
+            String[] filterUrls = spiderAnt.filterUrls();
             String[] startUrls = spiderAnt.startUrls();
             String cron = spiderAnt.cron();
             //get all parse() methods
@@ -70,7 +70,7 @@ public class SpiderFactory {
                         return null;
                     }));
             spider.setName(spiderName);
-            spider.setAllowedDomains(Arrays.asList(allowedDomains));
+            spider.setFilterUrls(Arrays.asList(filterUrls));
             spider.setStartUrls(Arrays.asList(startUrls));
             spider.setMethods(methods);
             spider.setCron(cron);

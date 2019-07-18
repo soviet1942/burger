@@ -20,7 +20,7 @@ import java.util.List;
  */
 
 @Spider(name = "toutiao", cron = "0/3 * * * * ?", startUrls = "https://www.toutiao.com/api/pc/realtime_news/",
-        allowedDomains = {"toutiao.com", "365yg.com", "ixigua.com"})
+        filterUrls = {".*toutiao.com.*"})
 public class ToutiaoArticle {
 
     @Parser
