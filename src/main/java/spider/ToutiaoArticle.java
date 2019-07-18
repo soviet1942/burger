@@ -38,8 +38,7 @@ public class ToutiaoArticle {
             po.setTitle(title);
             po.setPoster(imgUrl);
         }
-        URL url = new URL("hehe");
-        response.setOutlinks(url);
+        response.addFeedback("www.baidu.com");
         return res;
     }
 }

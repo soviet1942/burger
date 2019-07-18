@@ -3,7 +3,6 @@ package bean;
 import controller.Server;
 import core.Scheduler;
 import downloader.HttpDownloader;
-import io.vertx.core.Future;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Test;
 import org.quartz.Job;
@@ -17,9 +16,9 @@ import java.util.List;
 /**
  * spider定时任务
  */
-public class InjectTask implements Job {
+public class UrlInjector implements Job {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(InjectTask.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(UrlInjector.class);
 
     @Override
     public void execute(JobExecutionContext context) {

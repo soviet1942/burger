@@ -1,9 +1,6 @@
 package core;
 
-import bean.Crawler;
-import bean.Request;
-import bean.Spider;
-import bean.InjectTask;
+import bean.*;
 import controller.Server;
 import downloader.HttpDownloader;
 import org.apache.commons.lang3.StringUtils;
@@ -13,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spider.SpiderFactory;
 
+import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -27,7 +24,7 @@ public class Scheduler {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
     private static Queue<Request> REQUEST_QUEUE = new PriorityQueue<>(Comparator.comparingInt(Request::getPriority));
-    private static Map<String, List<Pattern>> URL_PATTERN_MAP = new HashMap<>();
+    private static Map<Pattern, String> PATTERN_SPIDER_MAP = new HashMap<>();
     private static Long FETCH_INTERVAL;
     private static Scheduler INSTANCE;
 
@@ -48,9 +45,10 @@ public class Scheduler {
 
     private void init() {
         FETCH_INTERVAL = Optional.ofNullable(Crawler.instance().configs()).map(e -> e.getJSONObject("schedule")).map(e -> e.getLong("fetchInterval")).orElse(1000L);
-        SpiderFactory.instance().getSpiders().stream().filter(e -> StringUtils.isNotEmpty(e.getName()))
-                .filter(e -> e.getStartUrls() != null && e.getStartUrls().size() > 0).forEach(
-                        spider -> URL_PATTERN_MAP.put(spider.getName(), spider.getStartUrls().stream().map(Pattern::compile).collect(Collectors.toList())));
+        SpiderFactory.instance().getSpiders().stream()
+                .filter(e -> e.getFilterUrls() != null).forEach(
+                        spider -> spider.getFilterUrls().forEach(url ->
+                                PATTERN_SPIDER_MAP.put(Pattern.compile(url), spider.getName())));
     }
 
     public static void addRequest(Request request) {
@@ -60,20 +58,30 @@ public class Scheduler {
     public void start() {
         Server.getVertx().setPeriodic(FETCH_INTERVAL, e -> {
             Request request = REQUEST_QUEUE.poll();
-            String spiderName;
-            if (request != null && (spiderName = request.getSpiderName()) != null) {
-                String url;
-                if (request.getUrl() != null && StringUtils.isNotEmpty(url = request.getUrl().toString())) {
-                    for (Pattern pattern : URL_PATTERN_MAP.get(spiderName)) {
-                        if (pattern.matcher(url).matches()) {
-                            Request newRequest = HttpDownloader.instance().getDefaultRequest(url, spiderName);
-                            REQUEST_QUEUE.add(newRequest);
+
+        });
+    }
+
+    public void feedback(Response response) {
+        Feedback feedback;
+        if ((feedback = response.getFeedback()) != null) {
+            List<URL> urlList;
+            if ((urlList = feedback.getOutlinks()) != null) {
+                for (URL url : urlList) {
+                    for(Map.Entry<Pattern, String> entry : PATTERN_SPIDER_MAP.entrySet()) {
+                        Pattern pattern = entry.getKey();
+                        if (pattern.matcher(url.toString()).matches()) {
+                            String spiderName = entry.getValue();
+                            Request request = HttpDownloader.instance().getDefaultRequest(url.toString(), spiderName);
+                            REQUEST_QUEUE.add(request);
                             break;
                         }
                     }
                 }
+            } else if (StringUtils.isNotEmpty(feedback.getSpiderName())) {
+                REQUEST_QUEUE.add(new Request() {{ setSpiderName(feedback.getSpiderName()); }});
             }
-        });
+        }
     }
 
 
@@ -85,7 +93,7 @@ public class Scheduler {
         Properties quartzConfig = new Properties() {{ setProperty("org.quartz.threadPool.threadCount", "1"); }};
         SchedulerFactory schedulerFactory = new StdSchedulerFactory(quartzConfig);
         for (Spider spider : SpiderFactory.instance().getSpiders()) {
-            JobDetail jobDetail = JobBuilder.newJob(InjectTask.class).withIdentity(spider.getName(), "job-detail").build();
+            JobDetail jobDetail = JobBuilder.newJob(UrlInjector.class).withIdentity(spider.getName(), "job-detail").build();
             Trigger trigger = TriggerBuilder.newTrigger().withIdentity(spider.getName(), "job-trigger")
                     .withSchedule(CronScheduleBuilder.cronSchedule(spider.getCron())).build();
             org.quartz.Scheduler scheduler = schedulerFactory.getScheduler();
