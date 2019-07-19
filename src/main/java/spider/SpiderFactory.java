@@ -12,16 +12,15 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SpiderFactory {
 
     private static Logger LOGGER  = LoggerFactory.getLogger(SpiderFactory.class);
-    private List<Spider> spiders = new ArrayList<>();
+    private List<Spider> SPIDERS = new ArrayList<>();
+    private Map<String, Spider> SPIDER_MAP = new HashMap<>();
     private static SpiderFactory INSTANCE;
 
     private SpiderFactory() {}
@@ -40,7 +39,8 @@ public class SpiderFactory {
     }
 
     private void init() {
-        loadSpiders(Crawler.getReflection());
+        this.loadSpiders(Crawler.getReflection());
+        SPIDER_MAP = SPIDERS.stream().collect(Collectors.toMap(Spider::getName, Function.identity()));
     }
 
     /**
@@ -79,14 +79,16 @@ public class SpiderFactory {
             } catch (InstantiationException | IllegalAccessException e) {
                 LOGGER.error(ExceptionUtils.getStackTrace(e));
             }
-            spiders.add(spider);
+            SPIDERS.add(spider);
         });
     }
 
     public List<Spider> getSpiders() {
-        return spiders;
+        return SPIDERS;
     }
 
+    public Spider getSpiderByName(String spiderName) { return SPIDER_MAP.get(spiderName); }
 
+    public Map<String, Spider> getSpiderMap() { return SPIDER_MAP; }
 
 }

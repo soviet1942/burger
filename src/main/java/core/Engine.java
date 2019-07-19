@@ -68,9 +68,15 @@ public class Engine {
         SPIDER_FACTORY = SpiderFactory.instance();
     }
 
+    public void download(Request request) {
+        String spiderName = Optional.ofNullable(request).map(Request::getSpiderName).filter(StringUtils::isNotEmpty)
+                .orElseThrow(() -> new IllegalArgumentException("request or request's spiderName should not be empty !"));
+        Spider spider = Optional.ofNullable(SPIDER_FACTORY.getSpiderByName(spiderName))
+                .orElseThrow(() -> new IllegalArgumentException("cannot find spider named " + spiderName));
+        download(request, spider);
+    }
 
     public void download(Request request, Spider spider) {
-
         //before download
         MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
         //downloading
