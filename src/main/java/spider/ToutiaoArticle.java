@@ -38,7 +38,8 @@ public class ToutiaoArticle {
             po.setTitle(title);
             po.setPoster(imgUrl);
         }
-        response.addFeedback("www.baidu.com");
+        response.addOutlink("www.baidu.com");
+
         return res;
     }
 }

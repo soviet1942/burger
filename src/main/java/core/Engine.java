@@ -40,6 +40,8 @@ public class Engine {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private static Engine INSTANCE;
+    /** scheduler */
+    private static Scheduler SCHEDULER;
     /** middleware (downloader + spider) */
     private static MiddlewareFactory MIDDLEWARE_FACTORY;
     /** spider (parse text/html) */
@@ -63,6 +65,7 @@ public class Engine {
     }
 
     private void loadFactory() {
+        SCHEDULER = Scheduler.instance();
         MIDDLEWARE_FACTORY = MiddlewareFactory.instance();
         PIPELINE_FACTORY = PipelineFactory.instance();
         SPIDER_FACTORY = SpiderFactory.instance();
@@ -113,8 +116,11 @@ public class Engine {
                     //parsing
                     Object result = method.invoke(spider.getInstance(), response);
                     //after parse
-                    MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, new ArrayList<>(), spider);
+                    MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, spider);
+                    //add feedback
+                    SCHEDULER.feedback(response);
                     List<Object> data;
+                    //begin to persist
                     if (returnType != null) {
                         if (method.getReturnType() == List.class) {
                             data = (List) result;

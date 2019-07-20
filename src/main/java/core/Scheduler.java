@@ -36,8 +36,8 @@ public class Scheduler {
 
     public static void main(String[] args) throws SchedulerException {
         Scheduler scheduler = Scheduler.instance();
-        scheduler.schedulerJob();
-        scheduler.start();
+        scheduler.produce();
+        scheduler.consume();
         while (true) ;
     }
 
@@ -54,12 +54,30 @@ public class Scheduler {
         return INSTANCE;
     }
 
+    private void init() {
+        FETCH_INTERVAL = Optional.ofNullable(Crawler.instance().configs()).map(e -> e.getJSONObject("schedule"))
+                .map(e -> e.getLong("fetchInterval")).orElse(1000L);
+        SpiderFactory.instance().getSpiderMap().forEach((spiderName, spider) -> {
+            List<String> filterUrls;
+            if ((filterUrls = spider.getFilterUrls()) != null) {
+                filterUrls.forEach(url -> {
+                    if (StringUtils.isNotEmpty(url)) {
+                        PATTERN_SPIDER_MAP.put(Pattern.compile(url), spider.getName());
+                    }
+                });
+            }
+        });
+        SpiderFactory.instance().getSpiders().stream().filter(e -> e.getFilterUrls() != null)
+                .forEach(spider -> spider.getFilterUrls()
+                        .forEach(url -> PATTERN_SPIDER_MAP.put(Pattern.compile(url), spider.getName())));
+    }
+
     /**
+     * 生产者
      * 根据{@link Spider}的@cron注解 ，执行定时任务
-     *
      * @throws SchedulerException
      */
-    public void schedulerJob() throws SchedulerException {
+    public void produce() throws SchedulerException {
         Properties quartzConfig = new Properties() {{
             setProperty("org.quartz.threadPool.threadCount", "1");
         }};
@@ -74,58 +92,39 @@ public class Scheduler {
         }
     }
 
-    public void start() {
+    /**
+     * 消费者， 消费请求队列
+     */
+    public void consume() {
         Server.getVertx().setPeriodic(FETCH_INTERVAL, e -> {
             Request request = REQUEST_QUEUE.poll();
             Engine.instance().download(request);
         });
     }
 
-    private void init() {
-        FETCH_INTERVAL = Optional.ofNullable(Crawler.instance().configs()).map(e -> e.getJSONObject("schedule"))
-                .map(e -> e.getLong("fetchInterval")).orElse(1000L);
-        SpiderFactory.instance().getSpiderMap().forEach((spiderName, spider) -> {
-            List<String> filterUrls;
-            if ((filterUrls = spider.getFilterUrls()) != null) {
-                filterUrls.forEach(url -> {
-                    if (StringUtils.isNotEmpty(url)) {
-                        PATTERN_SPIDER_MAP.put(Pattern.compile(url), spider.getName());
-                    }
-                });
-            }
-        });
-        SpiderFactory.instance().getSpiders().stream()
-                .filter(e -> e.getFilterUrls() != null).forEach(
-                spider -> spider.getFilterUrls().forEach(url ->
-                        PATTERN_SPIDER_MAP.put(Pattern.compile(url), spider.getName())));
-    }
 
     /**
-     * 爬虫运行完毕，进行回调
+     * 爬虫运行完毕，根据结果回调
      * @param response
      */
     public void feedback(Response response) {
-        Feedback feedback;
-        if ((feedback = response.getFeedback()) != null) {
-            List<URL> urlList;
-            if ((urlList = feedback.getOutlinks()) != null) {
-                for (URL url : urlList) {
-                    for (Map.Entry<Pattern, String> entry : PATTERN_SPIDER_MAP.entrySet()) {
-                        Pattern pattern = entry.getKey();
-                        if (pattern.matcher(url.toString()).matches()) {
-                            String spiderName = entry.getValue();
-                            Request request = HttpDownloader.instance().getDefaultRequest(url.toString(), spiderName);
-                            REQUEST_QUEUE.add(request);
-                            break;
+        response.getOutlinks().forEach(outLink -> {
+            URL url = outLink.getUrl();
+            if (url != null && StringUtils.isNotEmpty(url.toString())) {
+                for (Map.Entry<Pattern, String> entry : PATTERN_SPIDER_MAP.entrySet()) {
+                    Pattern pattern = entry.getKey();
+                    if (pattern.matcher(url.toString()).matches()) {
+                        String spiderName = entry.getValue();
+                        Request request = HttpDownloader.instance().getDefaultRequest(url.toString(), spiderName);
+                        if (outLink.getAllMeta() != null) {
+                            request.addMeta(outLink.getAllMeta());
                         }
+                        REQUEST_QUEUE.add(request);
+                        break;
                     }
                 }
-            } else if (StringUtils.isNotEmpty(feedback.getSpiderName())) {
-                REQUEST_QUEUE.add(new Request() {{
-                    setSpiderName(feedback.getSpiderName());
-                }});
             }
-        }
+        });
     }
 
 

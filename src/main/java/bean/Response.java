@@ -8,9 +8,7 @@ import spider.SpiderFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -21,7 +19,8 @@ import java.util.stream.Collectors;
 public class Response {
 
     private HttpResponse httpResponse;
-    private Feedback feedback;
+    private Map<String, Object> meta;
+    private List<Feedback> feedbacks;
 
     public Response(HttpResponse httpResponse) {
         this.httpResponse = httpResponse;
@@ -33,29 +32,51 @@ public class Response {
         return httpResponse;
     }
 
-    public Feedback getFeedback() {
-        return feedback;
+
+
+    public void addOutlink(URL... urls) {
+        for (URL url : urls) {
+            feedbacks.add(new Feedback(url, meta));
+        }
     }
 
-
-    public void addFeedback(URL... urls) {
-        this.feedback.setOutlinks(Arrays.asList(urls));
+    public void addOutlink(String... urls) {
+        addOutlink(Arrays.asList(urls));
     }
 
-    public void addFeedback(String... urls) {
-        addFeedback(Arrays.asList(urls));
-    }
-
-    public void addFeedback(List<String> urls) {
-        List<URL> list = new ArrayList<>();
+    public void addOutlink(List<String> urls) {
         for (String url : urls) {
             try {
-                list.add(new URL(url));
+                feedbacks.add(new Feedback(new URL(url), meta));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
         }
-        this.feedback.setOutlinks(list);
     }
 
+    public List<Feedback> getOutlinks() {
+        return feedbacks;
+    }
+
+    public <M> M getMeta(String name) {
+        return (M) meta.get(name);
+    }
+
+    public Map<String, Object> getAllMeta() {
+        return meta;
+    }
+
+    public void addMeta(String name, Object value) {
+        if (meta == null) {
+            meta = new HashMap<>();
+        }
+        meta.put(name, value);
+    }
+
+    public void addMeta(Map<String, Object> meta) {
+        if (meta == null) {
+            meta = new HashMap<>();
+        }
+        this.meta = meta;
+    }
 }

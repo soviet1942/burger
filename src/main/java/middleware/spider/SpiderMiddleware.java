@@ -21,7 +21,7 @@ public interface SpiderMiddleware {
 
     }
 
-    default void processSpiderOutput(Response response, List<Object> result, Spider spider) {
+    default void processSpiderOutput(Response response, Spider spider) {
 
     }
 

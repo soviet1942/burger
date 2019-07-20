@@ -38,6 +38,7 @@ public class MiddlewareFactory {
 
     private void init() {
         loadMiddlewares(Crawler.getReflection());
+        initMiddleware();
     }
 
     /**
@@ -101,9 +102,9 @@ public class MiddlewareFactory {
             spiderMW.processSpiderInput(response, spider);
         }
     }
-    public void exeProcessSpiderOutput(Response response, List<Object> result, Spider spider) {
+    public void exeProcessSpiderOutput(Response response, Spider spider) {
         for (SpiderMiddleware spiderMW : spiderMWs) {
-            spiderMW.processSpiderOutput(response, result, spider);
+            spiderMW.processSpiderOutput(response, spider);
         }
     }
     public void exeProcessSpiderException(Response response, Throwable throwable, Spider spider) {
@@ -112,7 +113,7 @@ public class MiddlewareFactory {
         }
     }
 
-    public void initMiddleware(Engine engine) {
+    public void initMiddleware() {
         Crawler crawler = Crawler.instance();
         getDownloaderMWs().forEach(e -> e.fromCrawler(crawler));
         getSpiderMWs().forEach(e -> e.fromCrawler(crawler));
