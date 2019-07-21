@@ -93,11 +93,12 @@ public class Engine {
                     //start parse
                     parse(response, spider);
                 } catch (Exception e) {
-                    LOGGER.error(ExceptionUtils.getStackTrace(e.getCause()));
+                    LOGGER.error(ExceptionUtils.getStackTrace(e));
                     MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
                 }
             } else {
                 //download failed
+                LOGGER.error(ExceptionUtils.getStackTrace(ar.cause()));
                 MIDDLEWARE_FACTORY.exeProcessException(request, ar.cause(), spider);
             }
         });
@@ -127,10 +128,10 @@ public class Engine {
                         } else {
                             data = new ArrayList<Object>() {{ add(result); }};
                         }
-                        persist(data, returnType);
+                        PIPELINE_FACTORY.generateSql(returnType, data);
                     }
                 } catch (Exception e) {
-                    LOGGER.error(ExceptionUtils.getStackTrace(e.getCause()));
+                    LOGGER.error(ExceptionUtils.getStackTrace(e));
                 }
             }
         }
@@ -138,6 +139,7 @@ public class Engine {
 
 
     public void persist(List<Object> data, Class<?> clazz) {
+
         //校验
         SqlUtils.verifyAllTables();
         //sql前缀
@@ -146,7 +148,7 @@ public class Engine {
             return;
         }
         StringBuilder sql = new StringBuilder("INSERT IGNORE INTO `").append(table.value()).append("` (");
-        List<Column> columns = Arrays.stream(clazz.getAnnotationsByType(Column.class)).filter(Column::insertable)
+        List<Column> columns = Arrays.stream(clazz.getDeclaredAnnotationsByType(Column.class)).filter(Column::insertable)
                 .filter(c -> c.name() != null).collect(Collectors.toList());
         for (Column column : columns) {
             sql.append("`").append(column.name()).append("`,");

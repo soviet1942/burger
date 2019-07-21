@@ -37,12 +37,14 @@ public class Request {
     public Request(HttpRequest<Buffer> httpRequest, URL url) {
         this.httpRequest = httpRequest;
         this.url = url;
+        httpRequest.host(this.url.getHost());
     }
 
     public Request(HttpRequest<Buffer> httpRequest, String url) {
         this.httpRequest = httpRequest;
         try {
             this.url = new URL(url);
+            httpRequest.host(this.url.getHost());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }

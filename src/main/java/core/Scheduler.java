@@ -23,6 +23,7 @@ public class Scheduler {
 
     private static Long FETCH_INTERVAL;
     private static Scheduler INSTANCE;
+    private static Engine ENGINE;
     private static Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
     private static Map<Pattern, String> PATTERN_SPIDER_MAP = new HashMap<>();
     private static Queue<Request> REQUEST_QUEUE = new PriorityQueue<>(Comparator.comparingInt(Request::getPriority));
@@ -47,6 +48,7 @@ public class Scheduler {
                 if (INSTANCE == null) {
                     INSTANCE = new Scheduler();
                     INSTANCE.init();
+                    ENGINE = Engine.instance();
                     return INSTANCE;
                 }
             }
@@ -98,7 +100,9 @@ public class Scheduler {
     public void consume() {
         Server.getVertx().setPeriodic(FETCH_INTERVAL, e -> {
             Request request = REQUEST_QUEUE.poll();
-            Engine.instance().download(request);
+            if (request != null) {
+                ENGINE.download(request);
+            }
         });
     }
 
@@ -108,23 +112,26 @@ public class Scheduler {
      * @param response
      */
     public void feedback(Response response) {
-        response.getOutlinks().forEach(outLink -> {
-            URL url = outLink.getUrl();
-            if (url != null && StringUtils.isNotEmpty(url.toString())) {
-                for (Map.Entry<Pattern, String> entry : PATTERN_SPIDER_MAP.entrySet()) {
-                    Pattern pattern = entry.getKey();
-                    if (pattern.matcher(url.toString()).matches()) {
-                        String spiderName = entry.getValue();
-                        Request request = HttpDownloader.instance().getDefaultRequest(url.toString(), spiderName);
-                        if (outLink.getAllMeta() != null) {
-                            request.addMeta(outLink.getAllMeta());
+        List<Feedback> feedbackList;
+        if ((feedbackList = response.getOutlinks()) != null) {
+            feedbackList.forEach(outLink -> {
+                URL url = outLink.getUrl();
+                if (url != null && StringUtils.isNotEmpty(url.toString())) {
+                    for (Map.Entry<Pattern, String> entry : PATTERN_SPIDER_MAP.entrySet()) {
+                        Pattern pattern = entry.getKey();
+                        if (pattern.matcher(url.toString()).matches()) {
+                            String spiderName = entry.getValue();
+                            Request request = HttpDownloader.instance().getDefaultRequest(url.toString(), spiderName);
+                            if (outLink.getAllMeta() != null) {
+                                request.addMeta(outLink.getAllMeta());
+                            }
+                            REQUEST_QUEUE.add(request);
+                            break;
                         }
-                        REQUEST_QUEUE.add(request);
-                        break;
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
 

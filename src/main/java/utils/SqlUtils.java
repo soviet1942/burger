@@ -28,12 +28,12 @@ import java.util.regex.Pattern;
  */
 public class SqlUtils {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private static BasicDataSource DS;
+    private static boolean INITIALIZED;
+    private static Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private static String PASSWORD;
     private static String URL;
     private static String USERNAME;
-    private static boolean INITIALIZED;
 
     static {
         JSONObject conf = Crawler.instance().configs();
@@ -41,97 +41,6 @@ public class SqlUtils {
             DS = init(conf);
         }
         INITIALIZED = true;
-    }
-
-    /**
-     * 获取连接池
-     * @param conf {"url": "", "username": "", "password": ""}
-     * @return
-     */
-    public static BasicDataSource init(JSONObject conf) {
-        BasicDataSource ds = new BasicDataSource();
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            URL = Optional.ofNullable(conf.getString("url")).orElseThrow(() -> new IllegalAccessException("数据库url参数为空"));
-            USERNAME = Optional.ofNullable(conf.getString("username")).orElseThrow(() -> new IllegalArgumentException("数据库user参数为空"));
-            PASSWORD = Optional.ofNullable(conf.getString("password")).orElse("");
-            ds.setUrl(URL);
-            ds.setUsername(USERNAME);
-            ds.setPassword(PASSWORD);
-            ds.setMinIdle(Optional.ofNullable(conf.getString("minIdle")).map(Integer::parseInt).orElse(5));
-            ds.setMaxIdle(Optional.ofNullable(conf.getString("maxIdle")).map(Integer::parseInt).orElse(10));
-            ds.setMaxOpenPreparedStatements(Optional.ofNullable(conf.getString("maxStatements")).map(Integer::parseInt).orElse(100));
-        } catch (ClassNotFoundException | IllegalAccessException e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
-        }
-        return ds;
-    }
-
-    public static Connection getConn() {
-        Connection conn = null;
-        try {
-            conn = DS.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return conn;
-    }
-
-    public static Connection getConn(BasicDataSource ds) {
-        Connection conn = null;
-        try {
-            conn = ds.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return conn;
-    }
-
-    public static Statement getStat(Connection conn) {
-        Statement stat = null;
-        try {
-            stat = conn.createStatement();
-        } catch (SQLException e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
-        }
-        return stat;
-    }
-
-    public static void main(String[] args) {
-
-        boolean res = verifyColumn("article", new HashMap<String, String>() {{
-            put("cover", "varchar");
-            put("isOriginal", "smallint");
-            put("publish_time", "datetime");
-            put("id", "int");
-            put("title", "varchar");
-            put("cont1ent", "fff");
-        }});
-        System.out.println(res);
-    }
-
-
-    /**
-     * 查询
-     *
-     * @param sql
-     * @param resultSet 拿到查询结果，后续操作
-     */
-    public static void executeQuery(String sql, ExecuteQuery resultSet) {
-        Connection conn = getConn();
-        Statement stat = getStat(conn);
-        try {
-            ResultSet resSet = stat.executeQuery(sql);
-            resultSet.exec(resSet);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                stat.close();
-            } catch (SQLException e) {
-                LOGGER.error(ExceptionUtils.getStackTrace(e));
-            }
-        }
     }
 
     /**
@@ -158,34 +67,61 @@ public class SqlUtils {
         return res;
     }
 
+    public static Connection getConn(BasicDataSource ds) {
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+
     /**
-     * 验证持久类和sql表及字段之间的映射
+     * 获取连接池
+     *
+     * @param conf {"url": "", "username": "", "password": ""}
      * @return
      */
-    public static boolean verifyAllTables() {
-        AtomicBoolean res = new AtomicBoolean(false);
-        Reflections reflections = Crawler.getReflection();
-        Set<Class<?>> tableClasses = reflections.getTypesAnnotatedWith(Table.class);
-        tableClasses.forEach(clazz -> {
-            Table table = clazz.getAnnotation(Table.class);
-            if (StringUtils.isNotEmpty(table.value())) {
-                Map<String, String> columnNameTypeMap = new HashMap<>();
-                Arrays.stream(clazz.getFields()).forEach(field -> {
-                    Column column = field.getAnnotation(Column.class);
-                    if (column != null && column.insertable() == true) {
-                        String columnType = column.columnDefinition() == null ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
-                        String columnName = column.name();
-                        columnNameTypeMap.put(columnName, columnType);
-                    }
-                });
-                res.set(verifyColumn(table.value(), columnNameTypeMap));
-            }
-        });
-        return res.get();
+    public static BasicDataSource init(JSONObject conf) {
+        BasicDataSource ds = new BasicDataSource();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            URL = Optional.ofNullable(conf.getString("url")).orElseThrow(() -> new IllegalAccessException("数据库url参数为空"));
+            USERNAME = Optional.ofNullable(conf.getString("username")).orElseThrow(() -> new IllegalArgumentException("数据库user参数为空"));
+            PASSWORD = Optional.ofNullable(conf.getString("password")).orElse("");
+            ds.setUrl(URL);
+            ds.setUsername(USERNAME);
+            ds.setPassword(PASSWORD);
+            ds.setMinIdle(Optional.ofNullable(conf.getString("minIdle")).map(Integer::parseInt).orElse(5));
+            ds.setMaxIdle(Optional.ofNullable(conf.getString("maxIdle")).map(Integer::parseInt).orElse(10));
+            ds.setMaxOpenPreparedStatements(Optional.ofNullable(conf.getString("maxStatements")).map(Integer::parseInt).orElse(100));
+        } catch (ClassNotFoundException | IllegalAccessException e) {
+            LOGGER.error(ExceptionUtils.getStackTrace(e));
+        }
+        return ds;
+    }
+
+    public static boolean isInitialize() {
+        return INITIALIZED;
+    }
+
+    public static void main(String[] args) {
+
+        boolean res = verifyColumn("article", new HashMap<String, String>() {{
+            put("cover", "varchar");
+            put("isOriginal", "smallint");
+            put("publish_time", "datetime");
+            put("id", "int");
+            put("title", "varchar");
+            put("cont1ent", "fff");
+        }});
+        System.out.println(res);
     }
 
     /**
      * 验证表字段映射关系
+     *
      * @param tableName
      * @param columnNameAndType 数据库表中 字段名称及字段类型名称（java对象类型）
      * @return
@@ -200,7 +136,7 @@ public class SqlUtils {
                 throw new IllegalArgumentException("cannot find column `" + columnName + "` in table [" + tableName + "], please check @Column if property exists");
             }
 
-            if (!columnType.equalsIgnoreCase(fieldType)) {
+            if (!sqlType2JavaType(columnType).equalsIgnoreCase(fieldType)) {
                 throw new IllegalArgumentException("type mismatch field type `" + fieldType + "` in column `" + columnName + "` from table [" + tableName + "], " + " the actual should be [" + columnType + "]");
             }
 
@@ -210,6 +146,7 @@ public class SqlUtils {
 
     /**
      * 获取表字段名和字段类型
+     *
      * @param tableName
      * @return
      */
@@ -227,11 +164,15 @@ public class SqlUtils {
                 columnNameTypeMap.put(columnName, columnType);
             }
         });
+        if (columnNameTypeMap.size() == 0) {
+            throw new IllegalArgumentException("table [" + tableName + "] not exists");
+        }
         return columnNameTypeMap;
     }
 
     /**
      * 数据库字段类型转java对象名称
+     *
      * @param sqlType
      * @return
      */
@@ -268,8 +209,74 @@ public class SqlUtils {
         }
     }
 
-    public static boolean isInitialize() {
-        return INITIALIZED;
+    /**
+     * 查询
+     *
+     * @param sql
+     * @param resultSet 拿到查询结果，后续操作
+     */
+    public static void executeQuery(String sql, ExecuteQuery resultSet) {
+        Connection conn = getConn();
+        Statement stat = getStat(conn);
+        try {
+            ResultSet resSet = stat.executeQuery(sql);
+            resultSet.exec(resSet);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                stat.close();
+            } catch (SQLException e) {
+                LOGGER.error(ExceptionUtils.getStackTrace(e));
+            }
+        }
+    }
+
+    public static Connection getConn() {
+        Connection conn = null;
+        try {
+            conn = DS.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+
+    public static Statement getStat(Connection conn) {
+        Statement stat = null;
+        try {
+            stat = conn.createStatement();
+        } catch (SQLException e) {
+            LOGGER.error(ExceptionUtils.getStackTrace(e));
+        }
+        return stat;
+    }
+
+    /**
+     * 验证持久类和sql表及字段之间的映射
+     *
+     * @return
+     */
+    public static boolean verifyAllTables() {
+        AtomicBoolean res = new AtomicBoolean(false);
+        Reflections reflections = Crawler.getReflection();
+        Set<Class<?>> tableClasses = reflections.getTypesAnnotatedWith(Table.class);
+        tableClasses.forEach(clazz -> {
+            Table table = clazz.getAnnotation(Table.class);
+            if (StringUtils.isNotEmpty(table.value())) {
+                Map<String, String> columnNameTypeMap = new HashMap<>();
+                Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
+                    Column column = field.getAnnotation(Column.class);
+                    if (column != null && column.insertable() == true) {
+                        String columnType = column.columnDefinition() != null ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
+                        String columnName = column.name();
+                        columnNameTypeMap.put(columnName, columnType);
+                    }
+                });
+                res.set(verifyColumn(table.value(), columnNameTypeMap));
+            }
+        });
+        return res.get();
     }
 
     interface Execute {

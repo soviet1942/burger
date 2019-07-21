@@ -7,7 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.SqlUtils;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static utils.SqlUtils.isInitialize;
@@ -17,7 +19,7 @@ import static utils.SqlUtils.sqlType2JavaType;
 public class PipelineFactory {
 
     private static Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
-    private List<Entry<?>> ENTRIES = new ArrayList<>();
+    private Map<Class<?>, Entry<?>> ENTRY_MAP = new HashMap<>();
     private static final String PARAM_PREFIX = "#{";
     private static final String PARAM_SUFFIX = "}";
     private static final Set<String> STRING = new HashSet<>(Arrays.asList("String", "Timestamp", "Blob"));
@@ -41,46 +43,19 @@ public class PipelineFactory {
 
     private void init() {
         if (isInitialize()) {
-            loadAllEntry();
-            prepareSql();
+            SqlUtils.verifyAllTables(); //校验
+            genSqlTemplate();
         }
     }
 
-    private String generateSql(Entry<?> ent, Map<String, Object> fieldNameValue) {
-        String sql = ent.getSqlTemplate();
-        for (Map.Entry<String, Object> e : fieldNameValue.entrySet()) {
-            sql = sql.replaceFirst(PARAM_PREFIX + e.getKey() + PARAM_SUFFIX, e.getValue().toString());
-        }
-        return sql;
-    }
 
-    private void loadAllEntry() {
-        Reflections reflections = Crawler.getReflection();
-        Set<Class<?>> tableClasses = reflections.getTypesAnnotatedWith(Table.class);
-        tableClasses.forEach(clazz -> {
-            Table table = clazz.getAnnotation(Table.class);
-            if (StringUtils.isNotEmpty(table.value())) {
-                Map<String, ColumnType> columnTypeMap = new HashMap<>();
-                Arrays.stream(clazz.getFields()).forEach(field -> {
-                    Column column = field.getAnnotation(Column.class);
-                    if (column != null && column.insertable() == true) {
-                        String columnName = column.name();
-                        String columnType = column.columnDefinition() == null ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
-                        columnTypeMap.put(columnName, new ColumnType(field.getType(), columnType));
-                    }
-                });
-                Entry entry = new Entry();
-                entry.setTableName(table.value());
-                entry.setColumnNameType(columnTypeMap);
-                ENTRIES.add(entry);
-            }
-        });
-    }
-
-    private void prepareSql() {
-        ENTRIES.forEach(entry -> {
+    /**
+     * 根据实体类生成sql模板
+     */
+    private void genSqlTemplate() {
+        loadEntry().forEach(entry -> {
             Set<Map.Entry<String, ColumnType>> entries = entry.getColumnNameType().entrySet();
-            StringBuilder sql = new StringBuilder("INSERT IGNORE INTO `").append(entry.getTableName()).append("` (");
+            StringBuilder sql = new StringBuilder("INSERT IGNORE INTO `").append(entry.getTableName()).append("` VALUES (");
             for (Map.Entry<String, ColumnType> column : entries) {
                 sql.append("`").append(column.getKey()).append("`,");
             }
@@ -101,7 +76,74 @@ public class PipelineFactory {
             sql.deleteCharAt(sql.lastIndexOf(","));
             sql.append(")");
             entry.setSqlTemplate(sql.toString());
+            ENTRY_MAP.put(entry.getClazz(), entry);
         });
+    }
+
+    /**
+     * 加载所有sql实体类
+     */
+    private List<Entry<?>> loadEntry() {
+        List<Entry<?>> entries = new ArrayList<>();
+        Reflections reflections = Crawler.getReflection();
+        Set<Class<?>> tableClasses = reflections.getTypesAnnotatedWith(Table.class);
+        tableClasses.forEach(clazz -> {
+            Table table = clazz.getAnnotation(Table.class);
+            if (StringUtils.isNotEmpty(table.value())) {
+                Map<String, ColumnType> columnTypeMap = new HashMap<>();
+                Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
+                    Column column = field.getAnnotation(Column.class);
+                    if (column != null && column.insertable() == true) {
+                        String columnName = column.name();
+                        String columnType = column.columnDefinition() == null ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
+                        columnTypeMap.put(columnName, new ColumnType(field.getType(), columnType));
+                    }
+                });
+                Entry entry = new Entry();
+                entry.setTableName(table.value());
+                entry.setColumnNameType(columnTypeMap);
+                entry.setClazz(clazz);
+                entries.add(entry);
+            }
+        });
+        return entries;
+    }
+
+    public List<String> generateSql(Class<?> clazz, List<Object> objects) {
+        List<String> sqlList = new ArrayList<>();
+        Entry<?> entry = ENTRY_MAP.get(clazz);
+        for (Object obj : objects) {
+            for (Field field : obj.getClass().getDeclaredFields()) {
+                String columnName = field.getName();
+                field.setAccessible(true);
+                try {
+                    Object o = field.get(obj);
+                    Map<String, Object> map = new HashMap<>();
+                    map.put(columnName, o);
+                    String sql = generateSql(entry, map);
+                    sqlList.add(sql);
+                    System.out.println(sql);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return sqlList;
+    }
+
+    /**
+     * 根据实体类生成sql语句
+     * @param ent
+     * @param fieldNameValue
+     * @return
+     */
+    private String generateSql(Entry<?> ent, Map<String, Object> fieldNameValue) {
+
+        String sql = ent.getSqlTemplate();
+        for (Map.Entry<String, Object> e : fieldNameValue.entrySet()) {
+            sql = sql.replaceFirst(PARAM_PREFIX + e.getKey() + PARAM_SUFFIX, e.getValue().toString());
+        }
+        return sql;
     }
 
     static class Entry<T> {

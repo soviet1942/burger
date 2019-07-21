@@ -2,6 +2,7 @@ package bean;
 
 import io.vertx.ext.web.client.HttpResponse;
 import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import spider.SpiderFactory;
 
@@ -28,11 +29,17 @@ public class Response {
 
     public Response() {}
 
+    public String text() {
+        return this.getHttpResponse().body().toString();
+    }
+
+    public Document html() {
+        return Jsoup.parse(this.text());
+    }
+
     public HttpResponse getHttpResponse() {
         return httpResponse;
     }
-
-
 
     public void addOutlink(URL... urls) {
         for (URL url : urls) {
@@ -47,7 +54,8 @@ public class Response {
     public void addOutlink(List<String> urls) {
         for (String url : urls) {
             try {
-                feedbacks.add(new Feedback(new URL(url), meta));
+                Feedback fk = new Feedback(new URL(url), meta);
+                feedbacks.add(fk);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -79,4 +87,5 @@ public class Response {
         }
         this.meta = meta;
     }
+
 }

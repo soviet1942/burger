@@ -9,10 +9,10 @@ import annotation.mysql.Table;
  * @Description:
  */
 
-@Table("toutiao_article")
+@Table("article")
 public class ToutiaoPO {
 
-    @Column
+    @Column(name = "id", insertable = false)
     private Integer id;
     @Column(name = "title")
     private String title;
@@ -22,10 +22,10 @@ public class ToutiaoPO {
     private String content;
     @Column(name = "poster")
     private String poster;
-    @Column(name = "publishTime")
+    @Column(name = "publish_time")
     private Long publishTime;
-    @Column(name = "isOriginal")
-    private Boolean isOriginal;
+    @Column(name = "is_original")
+    private Integer isOriginal;
     @Column(name = "url")
     private String url;
 
@@ -85,11 +85,11 @@ public class ToutiaoPO {
         this.publishTime = publishTime;
     }
 
-    public Boolean getOriginal() {
+    public Integer getOriginal() {
         return isOriginal;
     }
 
-    public void setOriginal(Boolean original) {
+    public void setOriginal(Integer original) {
         isOriginal = original;
     }
 }

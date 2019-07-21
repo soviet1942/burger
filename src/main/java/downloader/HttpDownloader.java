@@ -12,14 +12,14 @@ import middleware.downloader.interfaces.DownloadInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class HttpDownloader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HttpDownloader.class);
 
-    private static Integer connectTimeout;
-    private static Integer maxPoolSize;
-    private static Integer idelTimeout;
     private static HttpDownloader INSTANCE;
+    private static WebClientOptions CLIENT_OPTIONS;
 
     private HttpDownloader() {}
 
@@ -38,11 +38,14 @@ public class HttpDownloader {
 
     private void init() {
         JSONObject jsonObject = Crawler.instance().configs().getJSONObject("download");
-        if (jsonObject != null) {
-            connectTimeout = jsonObject.getString("maxTimeout") == null ? 30000 : Integer.parseInt(jsonObject.getString("maxTimeout"));
-            maxPoolSize = jsonObject.getString("maxPoolSize") == null ? 1 : Integer.parseInt(jsonObject.getString("maxPoolSize"));
-            idelTimeout = jsonObject.getString("idelTimeout") == null ? 10 : Integer.parseInt(jsonObject.getString("idelTimeout"));
-        }
+        Integer connectTimeout = Optional.ofNullable(jsonObject).map(e -> e.getString("maxTimeout")).map(Integer::parseInt).orElse(30000);
+        Integer maxPoolSize = Optional.ofNullable(jsonObject).map(e -> e.getString("maxPoolSize")).map(Integer::parseInt).orElse(1);
+        Integer idelTimeout = Optional.ofNullable(jsonObject).map(e -> e.getString("idelTimeout")).map(Integer::parseInt).orElse(10);
+        CLIENT_OPTIONS = new WebClientOptions() {{
+            setConnectTimeout(connectTimeout);
+            setMaxPoolSize(maxPoolSize);
+            setIdleTimeout(idelTimeout);
+        }};
     }
 
     public Request getDefaultRequest(String url) {
@@ -50,11 +53,7 @@ public class HttpDownloader {
     }
 
     public Request getDefaultRequest(String url, String spiderName) {
-        WebClientOptions webClientOptions = new WebClientOptions();
-        webClientOptions.setConnectTimeout(connectTimeout);
-        webClientOptions.setMaxPoolSize(maxPoolSize);
-        webClientOptions.setIdleTimeout(idelTimeout);
-        WebClient client = WebClient.create(Server.getVertx(), webClientOptions);
+        WebClient client = WebClient.create(Server.getVertx(), CLIENT_OPTIONS);
         HttpRequest<Buffer> httpRequest = client.get(url);
         Request request = new Request(httpRequest, url);
         if (spiderName != null) {

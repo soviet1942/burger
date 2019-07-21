@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * @Author: zhaoyoucheng
@@ -55,7 +56,8 @@ public class UserAgentMiddleware implements DownloaderMiddleware {
         String filePath = Thread.currentThread().getContextClassLoader().getResource("config/user-agent").getPath();
         try {
             String jsonStr = FileUtils.readFileToString(new File(filePath), "utf-8");
-            res = JSON.parseObject(jsonStr).getJSONArray(userAgentType).toJavaList(String.class);
+            res = JSON.parseObject(jsonStr).getJSONArray(userAgentType).toJavaList(String.class)
+                    .stream().peek(e -> e.replaceAll("\\n", "")).collect(Collectors.toList());
         } catch (IOException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
         }

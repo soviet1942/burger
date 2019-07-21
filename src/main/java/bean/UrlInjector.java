@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import spider.SpiderFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * spider定时任务
@@ -23,7 +24,7 @@ public class UrlInjector implements Job {
     @Override
     public void execute(JobExecutionContext context) {
         String spiderName = context.getTrigger().getJobKey().getName();
-        Spider spider = SpiderFactory.instance().getSpiders().stream().filter(e -> spiderName.equals(e.getName())).findFirst()
+        Spider spider = Optional.ofNullable(SpiderFactory.instance().getSpiderMap().get(spiderName))
                 .orElseThrow(() -> new IllegalArgumentException("cannot find spider named [" + spiderName + "]"));
         List<String> startUrls = spider.getStartUrls();
         if (startUrls.size() == 0) {

@@ -6,6 +6,9 @@ import java.util.Map;
 
 public class Feedback {
 
+    URL url;
+    private Map<String, Object> meta;
+
     public Feedback(URL url) {
         this.url = url;
     }
@@ -14,10 +17,6 @@ public class Feedback {
         this.url = url;
         this.meta = meta;
     }
-
-    URL url;
-
-    private Map<String, Object> meta;
 
     public URL getUrl() {
         return url;
