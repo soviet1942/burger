@@ -10,6 +10,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.client.HttpResponse;
 import pipeline.ToutiaoPO;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,14 +23,20 @@ import java.util.List;
  * @Description:
  */
 
-@Spider(name = "toutiao", cron = "0/3 * * * * ?", startUrls = {"https://www.toutiao.com/api/pc/realtime_news/"},
+@Spider(name = "toutiao", cron = "0/3 * * * * ?", startUrls = {"http://www.toutiao.com/api/pc/realtime_news/"},
         filterUrls = {".*toutiao.com.*"})
 public class ToutiaoArticle {
 
+    private String TOUTIAO_HOST = "http://www.toutiao.com/";
+
+    /**
+     * 头条实时新闻
+     * @param response
+     * @return
+     */
     @Parser
-    public List<ToutiaoPO> parse(Response response) {
+    public List<ToutiaoPO> realtimeNews(Response response) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String jsonStr = response.text();
-        System.out.println(jsonStr);
         List<ToutiaoPO> res = new ArrayList<>();
         JSONArray jsonArray = JSON.parseObject(jsonStr).getJSONArray("data");
         for (int i=0; i<jsonArray.size(); i++) {
@@ -43,7 +51,12 @@ public class ToutiaoArticle {
             res.add(po);
         }
         //response.addOutlink("http://www.baidu.com");
+        Method method = this.getClass().getMethod("detail", Response.class);
 
         return res;
+    }
+    
+    public void detail(Response response) {
+        
     }
 }

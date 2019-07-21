@@ -135,9 +135,9 @@ public class SqlUtils {
             if ((columnType = checkMap.get(columnName)) == null) {
                 throw new IllegalArgumentException("cannot find column `" + columnName + "` in table [" + tableName + "], please check @Column if property exists");
             }
-
-            if (!sqlType2JavaType(columnType).equalsIgnoreCase(fieldType)) {
-                throw new IllegalArgumentException("type mismatch field type `" + fieldType + "` in column `" + columnName + "` from table [" + tableName + "], " + " the actual should be [" + columnType + "]");
+            String columnJavaType = sqlType2JavaType(columnType);
+            if (!columnJavaType.equalsIgnoreCase(fieldType)) {
+                throw new IllegalArgumentException("wrong return type [" + fieldType + "] mapping column [" + tableName + "." + columnName + "] " + ",the actual type is [" + columnJavaType + "]");
             }
 
         });
@@ -268,8 +268,9 @@ public class SqlUtils {
                 Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
                     Column column = field.getAnnotation(Column.class);
                     if (column != null && column.insertable() == true) {
-                        String columnType = column.columnDefinition() != null ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
                         String columnName = column.name();
+                        String columnType = StringUtils.isNotEmpty(column.columnDefinition())
+                                ? sqlType2JavaType(column.columnDefinition()) : field.getType().getSimpleName();
                         columnNameTypeMap.put(columnName, columnType);
                     }
                 });

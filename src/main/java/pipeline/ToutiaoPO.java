@@ -3,6 +3,8 @@ package pipeline;
 import annotation.mysql.Column;
 import annotation.mysql.Table;
 
+import java.util.Date;
+
 /**
  * @Author: zhaoyoucheng
  * @Date: 2019/7/10 13:36
@@ -23,9 +25,9 @@ public class ToutiaoPO {
     @Column(name = "poster")
     private String poster;
     @Column(name = "publish_time")
-    private Long publishTime;
+    private Date publishTime;
     @Column(name = "is_original")
-    private Integer isOriginal;
+    private Short isOriginal;
     @Column(name = "url")
     private String url;
 
@@ -77,19 +79,19 @@ public class ToutiaoPO {
         this.content = content;
     }
 
-    public Long getPublishTime() {
+    public Date getPublishTime() {
         return publishTime;
     }
 
-    public void setPublishTime(Long publishTime) {
+    public void setPublishTime(Date publishTime) {
         this.publishTime = publishTime;
     }
 
-    public Integer getOriginal() {
+    public Short getOriginal() {
         return isOriginal;
     }
 
-    public void setOriginal(Integer original) {
+    public void setOriginal(Short original) {
         isOriginal = original;
     }
 }
