@@ -4,12 +4,15 @@ import bean.*;
 import controller.Server;
 import downloader.HttpDownloader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spider.SpiderFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -31,8 +34,8 @@ public class Scheduler {
     private Scheduler() {
     }
 
-    public static void addRequest(Request request) {
-        REQUEST_QUEUE.add(request);
+    public static boolean addRequest(Request request) {
+        return REQUEST_QUEUE.add(request);
     }
 
     public static void main(String[] args) throws SchedulerException {
@@ -76,7 +79,8 @@ public class Scheduler {
 
     /**
      * 生产者
-     * 根据{@link Spider}的@cron注解 ，执行定时任务
+     * 根据{@link Spider}的@cron注解 ，执行定时任务{@link UrlInjector}
+     *
      * @throws SchedulerException
      */
     public void produce() throws SchedulerException {
@@ -107,13 +111,9 @@ public class Scheduler {
     }
 
 
-    /**
-     * 爬虫运行完毕，根据结果回调
-     * @param response
-     */
-    public void feedback(Response response) {
-        List<Feedback> feedbackList;
-        if ((feedbackList = response.getOutlinks()) != null) {
+
+
+        /*if ((feedbackList = response.getOutlinks()) != null) {
             feedbackList.forEach(outLink -> {
                 URL url = outLink.getUrl();
                 if (url != null && StringUtils.isNotEmpty(url.toString())) {
@@ -131,8 +131,7 @@ public class Scheduler {
                     }
                 }
             });
-        }
-    }
+        }*/
 
 
 }

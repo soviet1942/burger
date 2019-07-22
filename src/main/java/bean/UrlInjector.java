@@ -27,6 +27,7 @@ public class UrlInjector implements Job {
         Spider spider = Optional.ofNullable(SpiderFactory.instance().getSpiderMap().get(spiderName))
                 .orElseThrow(() -> new IllegalArgumentException("cannot find spider named [" + spiderName + "]"));
         List<String> startUrls = spider.getStartUrls();
+
         if (startUrls.size() == 0) {
             Scheduler.addRequest(new Request() {{
                 setSpiderName(spiderName);

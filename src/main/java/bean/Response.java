@@ -7,6 +7,7 @@ import org.jsoup.nodes.Document;
 import spider.SpiderFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -41,28 +42,18 @@ public class Response {
         return httpResponse;
     }
 
-    public void addOutlink(URL... urls) {
-        for (URL url : urls) {
-            feedbacks.add(new Feedback(url, meta));
+    public void addFeedback(String url, String callbackMethod) {
+        Feedback feedback = new Feedback();
+        feedback.setCallback(callbackMethod);
+        try {
+            feedback.setUrl(new URL(url));
+            feedbacks.add(feedback);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 
-    public void addOutlink(String... urls) {
-        addOutlink(Arrays.asList(urls));
-    }
-
-    public void addOutlink(List<String> urls) {
-        for (String url : urls) {
-            try {
-                Feedback fk = new Feedback(new URL(url), meta);
-                feedbacks.add(fk);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public List<Feedback> getOutlinks() {
+    public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
 

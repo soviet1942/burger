@@ -3,19 +3,19 @@ package utils;
 import annotation.mysql.Column;
 import annotation.mysql.Table;
 import bean.Crawler;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import core.Engine;
-import org.apache.commons.dbcp2.BasicDataSource;
+import controller.Server;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.ResultSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -28,9 +28,8 @@ import java.util.regex.Pattern;
  */
 public class SqlUtils {
 
-    private static BasicDataSource DS;
-    private static boolean INITIALIZED;
-    private static Logger LOGGER = LoggerFactory.getLogger(Engine.class);
+    private static JDBCClient CLIENT;
+    private static Logger LOGGER = LoggerFactory.getLogger(SqlUtils.class);
     private static String PASSWORD;
     private static String URL;
     private static String USERNAME;
@@ -38,43 +37,8 @@ public class SqlUtils {
     static {
         JSONObject conf = Crawler.instance().configs();
         if ((conf = conf.getJSONObject("mysql")) != null) {
-            DS = init(conf);
+            CLIENT = init(conf);
         }
-        INITIALIZED = true;
-    }
-
-    /**
-     * 增删改
-     *
-     * @param sql
-     * @return
-     */
-    public static boolean execute(String sql) {
-        Connection conn = getConn();
-        Statement stat = getStat(conn);
-        boolean res = false;
-        try {
-            res = stat.execute(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                stat.close();
-            } catch (SQLException e) {
-                LOGGER.error(ExceptionUtils.getStackTrace(e));
-            }
-        }
-        return res;
-    }
-
-    public static Connection getConn(BasicDataSource ds) {
-        Connection conn = null;
-        try {
-            conn = ds.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return conn;
     }
 
     /**
@@ -83,40 +47,28 @@ public class SqlUtils {
      * @param conf {"url": "", "username": "", "password": ""}
      * @return
      */
-    public static BasicDataSource init(JSONObject conf) {
-        BasicDataSource ds = new BasicDataSource();
+    public static JDBCClient init(JSONObject conf) {
+        JDBCClient jdbcClient = null;
         try {
-            Class.forName("com.mysql.jdbc.Driver");
             URL = Optional.ofNullable(conf.getString("url")).orElseThrow(() -> new IllegalAccessException("数据库url参数为空"));
             USERNAME = Optional.ofNullable(conf.getString("username")).orElseThrow(() -> new IllegalArgumentException("数据库user参数为空"));
             PASSWORD = Optional.ofNullable(conf.getString("password")).orElse("");
-            ds.setUrl(URL);
-            ds.setUsername(USERNAME);
-            ds.setPassword(PASSWORD);
-            ds.setMinIdle(Optional.ofNullable(conf.getString("minIdle")).map(Integer::parseInt).orElse(5));
-            ds.setMaxIdle(Optional.ofNullable(conf.getString("maxIdle")).map(Integer::parseInt).orElse(10));
-            ds.setMaxOpenPreparedStatements(Optional.ofNullable(conf.getString("maxStatements")).map(Integer::parseInt).orElse(100));
-        } catch (ClassNotFoundException | IllegalAccessException e) {
+
+            JsonObject dbConfig = new JsonObject();
+            dbConfig.put("url", URL);
+            dbConfig.put("driver_class", "com.mysql.jdbc.Driver");
+            dbConfig.put("user", USERNAME);
+            dbConfig.put("password", PASSWORD);
+            jdbcClient = JDBCClient.createShared(Server.getVertx(), dbConfig);
+            return jdbcClient;
+        } catch (IllegalAccessException e) {
             LOGGER.error(ExceptionUtils.getStackTrace(e));
         }
-        return ds;
+        return jdbcClient;
     }
 
-    public static boolean isInitialize() {
-        return INITIALIZED;
-    }
-
-    public static void main(String[] args) {
-
-        boolean res = verifyColumn("article", new HashMap<String, String>() {{
-            put("cover", "varchar");
-            put("isOriginal", "smallint");
-            put("publish_time", "datetime");
-            put("id", "int");
-            put("title", "varchar");
-            put("cont1ent", "fff");
-        }});
-        System.out.println(res);
+    public static JDBCClient getClient() {
+        return CLIENT;
     }
 
     /**
@@ -157,11 +109,11 @@ public class SqlUtils {
         String sql = "SELECT `COLUMN_NAME` ,`DATA_TYPE` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'";
         sql = String.format(sql, databaseName, tableName);
         Map<String, String> columnNameTypeMap = new HashMap<>();
-        executeQuery(sql, (resultSet) -> {
-            while (resultSet.next()) {
-                String columnName = resultSet.getString(1);
-                String columnType = resultSet.getString(2);
-                columnNameTypeMap.put(columnName, columnType);
+        getClient().query(sql, ar -> {
+            if (ar.succeeded()) {
+                ResultSet resultSet = ar.result();
+                JsonArray jsonArray = resultSet.getOutput();
+                columnNameTypeMap.put(jsonArray.getString(0), jsonArray.getString(1));
             }
         });
         if (columnNameTypeMap.size() == 0) {
@@ -209,48 +161,6 @@ public class SqlUtils {
         }
     }
 
-    /**
-     * 查询
-     *
-     * @param sql
-     * @param resultSet 拿到查询结果，后续操作
-     */
-    public static void executeQuery(String sql, ExecuteQuery resultSet) {
-        Connection conn = getConn();
-        Statement stat = getStat(conn);
-        try {
-            ResultSet resSet = stat.executeQuery(sql);
-            resultSet.exec(resSet);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                stat.close();
-            } catch (SQLException e) {
-                LOGGER.error(ExceptionUtils.getStackTrace(e));
-            }
-        }
-    }
-
-    public static Connection getConn() {
-        Connection conn = null;
-        try {
-            conn = DS.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return conn;
-    }
-
-    public static Statement getStat(Connection conn) {
-        Statement stat = null;
-        try {
-            stat = conn.createStatement();
-        } catch (SQLException e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
-        }
-        return stat;
-    }
 
     /**
      * 验证持久类和sql表及字段之间的映射
@@ -277,14 +187,6 @@ public class SqlUtils {
             }
         });
         return res.get();
-    }
-
-    interface Execute {
-        void exec(boolean success) throws SQLException;
-    }
-
-    interface ExecuteQuery {
-        void exec(ResultSet resultSet) throws SQLException;
     }
 
 }

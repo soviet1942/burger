@@ -12,7 +12,6 @@ import utils.SqlUtils;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static utils.SqlUtils.isInitialize;
 import static utils.SqlUtils.sqlType2JavaType;
 
 
@@ -42,10 +41,8 @@ public class PipelineFactory {
     }
 
     private void init() {
-        if (isInitialize()) {
-            SqlUtils.verifyAllTables(); //校验
-            genSqlTemplate();
-        }
+        SqlUtils.verifyAllTables(); //校验
+        genSqlTemplate();
     }
 
 
