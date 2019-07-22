@@ -23,7 +23,7 @@ public class Spider {
     private List<String> startUrls;
 
     private Object instance;
-    private Map<Method, Class<?>> methods;
+    private Map<Method, Class<?>> methods; //key: 方法 value: 方法返回class类型
 
     public Spider() {}
 

@@ -1,13 +1,18 @@
 package bean;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Feedback {
 
-    URL url;
+    private URL url;
+    private String callback; //回掉方法相对路径 例: com.website.pro1.package1.class1.method2
     private Map<String, Object> meta;
+
+    public Feedback() {
+    }
 
     public Feedback(URL url) {
         this.url = url;
@@ -16,6 +21,14 @@ public class Feedback {
     public Feedback(URL url, Map<String, Object> meta) {
         this.url = url;
         this.meta = meta;
+    }
+
+    public String getCallback() {
+        return callback;
+    }
+
+    public void setCallback(String callback) {
+        this.callback = callback;
     }
 
     public URL getUrl() {

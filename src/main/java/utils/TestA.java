@@ -1,6 +1,7 @@
 package utils;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
@@ -36,7 +37,7 @@ public class TestA {
     private Future<String> firstOperation() {
         Future<String> future = Future.future();
 
-        vertx.setTimer(1000, delay -> future.complete("First Operation Complete"));
+        vertx.setTimer(2000, delay -> future.complete("First Operation Complete"));
 
         return future;
     }

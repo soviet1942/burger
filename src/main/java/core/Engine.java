@@ -28,6 +28,7 @@ import utils.SqlUtils;
 import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ public class Engine {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private static Engine INSTANCE;
+    private static Map<String, Object> CLASSPATH_INSTANCE_MAP = new HashMap<>();
     /** scheduler */
     private static Scheduler SCHEDULER;
     /** middleware (downloader + spider) */
@@ -79,6 +81,11 @@ public class Engine {
         download(request, spider);
     }
 
+    /**
+     * 下载
+     * @param request
+     * @param spider
+     */
     public void download(Request request, Spider spider) {
         //before download
         MIDDLEWARE_FACTORY.exeProcessRequest(request, spider);
@@ -89,9 +96,14 @@ public class Engine {
                 Response response = new Response(ar.result());
                 //after download
                 MIDDLEWARE_FACTORY.exeProcessResponse(request, response, spider);
+                boolean containsFeedback = StringUtils.isNotEmpty(request.getCallback());
                 try {
                     //start parse
-                    parse(response, spider);
+                    if (containsFeedback) {
+                        feedback(response, spider);
+                    } else {
+                        parse(response, spider);
+                    }
                 } catch (Exception e) {
                     LOGGER.error(ExceptionUtils.getStackTrace(e));
                     MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
@@ -105,7 +117,11 @@ public class Engine {
 
     }
 
-
+    /**
+     * 解析
+     * @param response
+     * @param spider
+     */
     public void parse(Response response, Spider spider) {
         //before parse
         MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
@@ -115,82 +131,91 @@ public class Engine {
             if (method.getAnnotation(Parser.class) != null) {
                 try {
                     //parsing
-                    Object result = method.invoke(spider.getInstance(), response);
+                    Object returnValue = method.invoke(spider.getInstance(), response);
                     //after parse
                     MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, spider);
                     //add feedback
-                    SCHEDULER.feedback(response);
-                    List<Object> data;
+                    addFeedback(response, spider);
                     //begin to persist
-                    if (returnType != null) {
-                        if (method.getReturnType() == List.class) {
-                            data = (List) result;
-                        } else {
-                            data = new ArrayList<Object>() {{ add(result); }};
-                        }
-                        PIPELINE_FACTORY.generateSql(returnType, data);
-                    }
+                    persist(returnType, returnValue);
                 } catch (Exception e) {
                     LOGGER.error(ExceptionUtils.getStackTrace(e));
+                    MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(),spider);
                 }
             }
         }
     }
 
-
-    public void persist(List<Object> data, Class<?> clazz) {
-
-        //校验
-        SqlUtils.verifyAllTables();
-        //sql前缀
-        Table table = clazz.getAnnotation(Table.class);
-        if (table == null && StringUtils.isNotEmpty(table.value())) {
-            return;
-        }
-        StringBuilder sql = new StringBuilder("INSERT IGNORE INTO `").append(table.value()).append("` (");
-        List<Column> columns = Arrays.stream(clazz.getDeclaredAnnotationsByType(Column.class)).filter(Column::insertable)
-                .filter(c -> c.name() != null).collect(Collectors.toList());
-        for (Column column : columns) {
-            sql.append("`").append(column.name()).append("`,");
-        }
-        sql.deleteCharAt(sql.lastIndexOf(","));
-        sql.append(") VLAUES (");
-
-        //判断字段类型
-        for (Field field : clazz.getFields()) {
-            Column column = field.getAnnotation(Column.class);
-            if (column != null) {
-                String fieldName = field.getName();
+    /**
+     * 回掉
+     *
+     * @param response
+     */
+    public void feedback(Response response, Spider spider) {
+        //before callback
+        MIDDLEWARE_FACTORY.exeProcessSpiderInput(response, spider);
+        for (Feedback feedback : response.getFeedbacks()) {
+            String callbackPath = feedback.getCallback();
+            if (StringUtils.isNotEmpty(callbackPath)) {
+                Integer splitIndex = callbackPath.lastIndexOf(".");
+                String classPath = callbackPath.substring(0, splitIndex);
+                String methodName = callbackPath.substring(splitIndex + 1);
                 try {
-                    Object value = field.get(clazz);
-                    Class<?> fieldType = field.getType();
-                    if (fieldType == String.class) {
-
+                    Object instance = CLASSPATH_INSTANCE_MAP.get(classPath);
+                    if (instance == null) {
+                        instance = Class.forName(classPath).newInstance();
+                        CLASSPATH_INSTANCE_MAP.put(classPath, instance);
                     }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    //call back
+                    Method method = instance.getClass().getDeclaredMethod(methodName, Response.class);
+                    Object returnValue = method.invoke(instance, response);
+                    Class<?> returnType = method.getReturnType();
+                    //after callback
+                    MIDDLEWARE_FACTORY.exeProcessSpiderOutput(response, spider);
+                    //begin to persist
+                    persist(returnType, returnValue);
+                } catch (Exception e) {
+                    LOGGER.error(ExceptionUtils.getStackTrace(e));
+                    MIDDLEWARE_FACTORY.exeProcessSpiderException(response, e.getCause(), spider);
                 }
-
             }
         }
-
-        //读取bean，sql赋值
-        data.forEach(e -> {
-            Arrays.stream(e.getClass().getFields()).forEach(field -> {
-                String fieldName = field.getName();
-                Class fieldType = field.getType();
-                if (fieldType == int.class || fieldType == Integer.class) {
-
-                } else if (fieldType == char.class || fieldType == String.class) {
-
-                } else if (fieldType == double.class || fieldType == Double.class) {
-
-                }
-            });
-        });
-        System.out.println(data.toArray());
-        System.out.println(clazz.getName());
     }
 
+
+    /**
+     * 添加回掉
+     * @param response
+     * @param spider
+     */
+    public void addFeedback(Response response, Spider spider) {
+        for (Feedback feedback : response.getFeedbacks()) {
+            String callbackPath = feedback.getCallback();
+            String url = feedback.getUrl().toString();
+            Request request = HttpDownloader.instance().getDefaultRequest(url);
+            request.setCallback(callbackPath);
+            request.setSpiderName(spider.getName());
+            request.addMeta(feedback.getAllMeta());
+            Scheduler.addRequest(request);
+        }
+    }
+
+    /**
+     * 持久化
+     * @param returnType
+     * @param data
+     */
+    public void persist(Class<?> returnType, Object data) {
+        List<Object> dataList;
+        if (returnType != null) {
+            if (returnType == List.class) {
+                dataList = (List) data;
+            } else {
+                dataList = new ArrayList<Object>() {{ add(data); }};
+            }
+            List<String> sqlList = PIPELINE_FACTORY.generateSql(returnType, dataList);
+
+        }
+    }
 
 }

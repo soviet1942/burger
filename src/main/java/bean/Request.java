@@ -24,6 +24,7 @@ public class Request {
     private short retryCount;
     private short priority;
     private String spiderName;
+    private String callback;
     private Map<String, Object> meta;
 
     public Request() {
@@ -118,5 +119,13 @@ public class Request {
 
     public void setSpiderName(String spiderName) {
         this.spiderName = spiderName;
+    }
+
+    public String getCallback() {
+        return callback;
+    }
+
+    public void setCallback(String callback) {
+        this.callback = callback;
     }
 }
