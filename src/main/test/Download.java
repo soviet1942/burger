@@ -25,27 +25,27 @@ public class Download {
     @Test
     public void test() throws MalformedURLException, InterruptedException {
         Vertx vertx = Vertx.vertx(new VertxOptions() {{
-            setWorkerPoolSize(1);
+            /*setWorkerPoolSize(1);
             setEventLoopPoolSize(1);
             setQuorumSize(1);
-            setInternalBlockingPoolSize(1);
+            setInternalBlockingPoolSize(1);*/
         }});
         WebClientOptions options = new WebClientOptions();
         options.setConnectTimeout(30000);
-        options.setMaxPoolSize(6);
-        options.setIdleTimeout(30);
-        options.setKeepAlive(true);
+        options.setMaxPoolSize(2000);
+        options.setIdleTimeout(60);
+        options.setHttp2MaxPoolSize(12);
         vertx.createHttpClient(options);
 
         Long start = System.currentTimeMillis();
         AtomicInteger total = new AtomicInteger(1);
-        for (int i=1; i<=200; i++) {
+        for (int i=1; i<=500; i++) {
             WebClient client = WebClient.create(vertx, options);
             int finalI = i;
             client.getAbs(URL).send(rq -> {
                 if (rq.succeeded()) {
-                    if (total.getAndIncrement() == 195) {
-                        System.out.println(System.currentTimeMillis() - start);
+                    if (total.getAndIncrement() == 485) {
+                        System.out.println("====================" + (System.currentTimeMillis() - start));
                     }
                     LOGGER.info(rq.result().statusCode() + "-" + finalI);
                 } else {
@@ -58,16 +58,16 @@ public class Download {
 
     @Test
     public void tset2() throws InterruptedException {
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(12);
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
         AtomicInteger total = new AtomicInteger(1);
         Long start = System.currentTimeMillis();
-        for (int i=1; i<=200; i++) {
+        for (int i=1; i<=500; i++) {
             int finalI = i;
             threadPoolExecutor.execute(() -> {
                 try {
                     int status = Jsoup.connect(URL).ignoreContentType(true).execute().statusCode();
                     System.out.println(status + "---" + finalI);
-                    if (total.getAndIncrement() == 195) {
+                    if (total.getAndIncrement() == 485) {
                         System.out.println("=========================" + (System.currentTimeMillis() - start));
                     }
                 } catch (IOException e) {
