@@ -6,7 +6,17 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.parsetools.JsonParser;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.Base64;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * @Author: zhaoyoucheng
@@ -74,10 +84,27 @@ public class TestA {
     @Test
     public void test3() {
         EventBus eb = vertx.eventBus();
-        eb.consumer("news.uk.sport", message -> {
-            System.out.println("I have received a message: " + message.body());
+
+        eb.consumer("news.uk.sport", msg -> {
+            System.out.println("I have received a message: " + msg.body().toString());
+            msg.reply("replay: yep!!!");
         });
-        eb.send("news.uk.sport", "Yay! Someone kicked a ball");
+
+        eb.consumer("news.uk.sport", msg -> {
+            vertx.executeBlocking(future -> {
+                //call dubbo service
+                String dubboMsg = "dubbo msg";
+                future.complete(dubboMsg);
+            }, result -> {
+                msg.reply(result.result());
+            });
+        });
+
+        eb.request("news.uk.sport", "Yay! Someone kicked a ball", result -> {
+            if (result.succeeded()) {
+                System.out.println(result.result().body().toString());
+            }
+        });
         while (true);
     }
 
@@ -108,4 +135,16 @@ public class TestA {
         parser.handle(Buffer.buffer("[0,1,2,3,4]"));
         parser.end();
     }
+
+
+
+    @Test
+    public void df() throws IOException {
+        LinkedBlockingQueue linkedBlockingQueue = new LinkedBlockingQueue(1);
+        linkedBlockingQueue.add("s");
+        linkedBlockingQueue.add("s");
+        linkedBlockingQueue.add("s");
+    }
+
+
 }
