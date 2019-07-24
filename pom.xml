@@ -88,6 +88,19 @@
         </dependency>
 
         <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.8.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.asynchttpclient</groupId>
+            <artifactId>async-http-client</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
+
+        <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections-spring</artifactId>
             <version>0.9.9-RC1</version>
