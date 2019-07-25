@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import okhttp3.OkHttpClient;
@@ -31,14 +32,41 @@ import static org.asynchttpclient.Dsl.asyncHttpClient;
 
 public class Download {
     private static Logger LOGGER = LoggerFactory.getLogger(Download.class);
-    private static String URL = "http://quotes.toscrape.com/page/2/";
-    private static Integer TOTAL = 1000;
+    private static String URL = "https://s3.pstatp.com/toutiao/xigua_video_web_pc/static/js/index.517ce9e3.chunk.js";
+    private static Integer TOTAL = 500;
     private static Integer ACTUAL = (int) Math.round(TOTAL * 0.95);
     //https://s3.pstatp.com/toutiao/xigua_video_web_pc/static/js/index.517ce9e3.chunk.js 1.4M
     //https://s3.pstatp.com/toutiao/xigua_video_web_pc/static/js/vendors~byted-player-xgpc.2555ab1c.chunk.js 127k
+    //https://www.ixigua.com/i6696739609893667335/ 200k
     //https://mp.weixin.qq.com/s?timestamp=1563959776&src=3&ver=1&signature=a3Y*0gZyUrLefMzRWIuAeS3KjsjnqbwTCP4uHBra9xWzERF0fxN4HPxQ43kfaFLlKrIwt-gmV9vAkbKpL5eITjfSYqOn04tHeGqSqaFpZGBKM2W3lFqwXLBZ9flMdG7tVcYEpwZkKnfr7qWBRZaimhANIz6uziTTXj5*uIJE9ok= 350k
     //http://quotes.toscrape.com/page/2/ 15k
     //http://httpbin.org/headers  504b
+
+    @Test
+    public void testHttpClient() throws Exception {
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
+        AtomicInteger total = new AtomicInteger(1);
+        Long start = System.currentTimeMillis();
+        for (int i = 1; i <= TOTAL; i++) {
+            int finalI = i;
+            threadPoolExecutor.execute(() -> {
+                try {
+                    int status = Jsoup.connect(URL + "?i=" + System.currentTimeMillis()).ignoreContentType(true)
+                            .proxy("123.163.21.12", 3128)
+                            .execute().statusCode();
+                    LOGGER.info(status + "---" + finalI + "---");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    if (total.getAndIncrement() == ACTUAL) {
+                        LOGGER.info("=========================" + (System.currentTimeMillis() - start));
+                    }
+                }
+            });
+        }
+        while (true) ;
+    }
+
 
     @Test
     public void testVertx() throws Exception {
@@ -58,8 +86,8 @@ public class Download {
         Long start = System.currentTimeMillis();
         AtomicInteger total = new AtomicInteger(1);
         Set<String> set = new HashSet<>();
+        WebClient client = WebClient.create(vertx, options);
         for (int i = 1; i <= TOTAL; i++) {
-            WebClient client = WebClient.create(vertx, options);
             /*Proxy proxy = nextProxy();
             options.setProxyOptions(new ProxyOptions() {{
                 setHost(proxy.getIp());
@@ -82,31 +110,6 @@ public class Download {
         while (true) ;
     }
 
-    @Test
-    public void testHttpClient() throws Exception {
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
-        AtomicInteger total = new AtomicInteger(1);
-        Long start = System.currentTimeMillis();
-        for (int i = 1; i <= TOTAL; i++) {
-            int finalI = i;
-            threadPoolExecutor.execute(() -> {
-                try {
-                    //Proxy proxy = nextProxy();
-                    int status = Jsoup.connect(URL).ignoreContentType(true)
-                            //.proxy(proxy.getIp(), proxy.getPort())
-                            .execute().statusCode();
-                    LOGGER.info(status + "---" + finalI + "---");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (total.getAndIncrement() == ACTUAL) {
-                        LOGGER.info("=========================" + (System.currentTimeMillis() - start));
-                    }
-                }
-            });
-        }
-        while (true) ;
-    }
 
     @Test
     public void testAsynch() throws IOException {
@@ -235,6 +238,15 @@ public class Download {
         public void setPort(Integer port) {
             this.port = port;
         }
+    }
+
+    @Test
+    public void prox() throws IOException {
+        String result = Jsoup.connect("http://httpbin.org/ip")
+                .ignoreContentType(true)
+                .proxy("123.55.3.47", 3128)
+                .get().text();
+        System.out.println(result);
     }
 
 }
